@@ -1,20 +1,11 @@
-import { useState } from 'react'
-
-
-
-
+import { useState } from "react";
 
 function App() {
- 
-
   return (
-    <>
-      <div>
-        softeee
-      </div>
-        
-    </>
-  )
+    
+      <div className="font-bold">softeee</div>
+    
+  );
 }
 
-export default App
+export default App;
