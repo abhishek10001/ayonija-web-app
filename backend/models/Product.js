@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const productSchema = new mongoose.Schema({
   name: { 
@@ -38,9 +38,9 @@ const productSchema = new mongoose.Schema({
     type: Boolean, 
     default: false 
   },
-  quantity: { 
-    type: String, 
-    default: '1 item' 
+  createdAt: { 
+    type: Date, 
+    default: Date.now 
   }
 });
 

@@ -1,81 +1,102 @@
-const passport = require('passport');
-const { Strategy: LocalStrategy } = require('passport-local');
-const { User } = require('../models/models');
-const { scrypt, randomBytes, timingSafeEqual } = require('crypto');
-const { promisify } = require('util');
+// import { getAuth } from 'firebase/auth';
+// import { initializeApp } from 'firebase/app';
+// import { firebaseConfig } from '../firebaseConfig';
 
-// Convert scrypt to promise-based version
-const scryptAsync = promisify(scrypt);
+// // Initialize Firebase
+// const app = initializeApp(firebaseConfig);
+// const auth = getAuth(app);
 
-// Hash password function
-async function hashPassword(password) {
-  const salt = randomBytes(16).toString('hex');
-  const buf = await scryptAsync(password, salt, 64);
-  return `${buf.toString('hex')}.${salt}`;
-}
+// const verifyAdmin = async (req, res, next) => {
+//   try {
+//     const authHeader = req.headers.authorization;
+    
+//     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+//       return res.status(401).json({
+//         success: false,
+//         message: 'No token provided'
+//       });
+//     }
 
-// Compare passwords function
-async function comparePasswords(supplied, stored) {
-  const [hashed, salt] = stored.split('.');
-  const hashedBuf = Buffer.from(hashed, 'hex');
-  const suppliedBuf = await scryptAsync(supplied, salt, 64);
-  return timingSafeEqual(hashedBuf, suppliedBuf);
-}
+//     const token = authHeader.split('Bearer ')[1];
+    
+//     // Verify the token
+//     const decodedToken = await auth.verifyIdToken(token);
+    
+//     // Check if the email is in the allowed list
+//     const allowedAdminEmails = [
+//       'admin@example.com',
+//       'superadmin@example.com'
+//     ];
 
-// Configure passport authentication
-function configurePassport() {
-  // Define authentication strategy
-  passport.use(
-    new LocalStrategy(async (username, password, done) => {
-      try {
-        const user = await User.findOne({ username });
-        if (!user || !(await comparePasswords(password, user.password))) {
-          return done(null, false);
-        } else {
-          return done(null, user);
-        }
-      } catch (error) {
-        return done(error);
-      }
-    })
-  );
+//     if (!allowedAdminEmails.includes(decodedToken.email)) {
+//       return res.status(403).json({
+//         success: false,
+//         message: 'Unauthorized access'
+//       });
+//     }
 
-  // Serialize user to session
-  passport.serializeUser((user, done) => {
-    done(null, user.id);
-  });
+//     // Add the decoded token to the request object
+//     req.admin = decodedToken;
+//     next();
+//   } catch (error) {
+//     console.error('Error verifying token:', error);
+//     res.status(401).json({
+//       success: false,
+//       message: 'Invalid token',
+//       error: error.message
+//     });
+//   }
+// };
 
-  // Deserialize user from session
-  passport.deserializeUser(async (id, done) => {
+// module.exports = {
+//   verifyAdmin
+// };
+
+
+import { getAuth } from 'firebase/auth';
+import { initializeApp } from 'firebase/app';
+import { firebaseConfig } from '../firebaseConfig.js';
+import { allowedAdminEmails } from '../constants/adminList.js';
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+const verifyAdmin = async (req, res, next) => {
     try {
-      const user = await User.findById(id);
-      done(null, user);
+        const authHeader = req.headers.authorization;
+        
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                success: false,
+                message: 'No token provided'
+            });
+        }
+
+        const token = authHeader.split('Bearer ')[1];
+        
+        // Verify the token
+        const decodedToken = await auth.verifyIdToken(token);
+        
+        // Check if the email is in the allowed list
+        if (!allowedAdminEmails.includes(decodedToken.email)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Unauthorized access'
+            });
+        }
+
+        // Add the decoded token to the request object
+        req.admin = decodedToken;
+        next();
     } catch (error) {
-      done(error);
+        console.error('Error verifying token:', error);
+        res.status(401).json({
+            success: false,
+            message: 'Invalid token',
+            error: error.message
+        });
     }
-  });
-}
-
-// Middleware to check if user is authenticated
-const isAuthenticated = (req, res, next) => {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  return res.status(401).json({ message: 'Not authenticated' });
 };
 
-// Middleware to check if user is an admin
-const isAdmin = (req, res, next) => {
-  if (req.isAuthenticated() && req.user && req.user.isAdmin) {
-    return next();
-  }
-  return res.status(403).json({ message: 'Access denied: Admin permission required' });
-};
-
-module.exports = {
-  hashPassword,
-  comparePasswords,
-  configurePassport,
-  isAuthenticated,
-  isAdmin
-}; 
+export { verifyAdmin };
