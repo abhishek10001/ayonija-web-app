@@ -3,13 +3,18 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import adminRoutes from './routes/admin.js';
+import connectDB from './config/mongodb.js';
+import './config/cloudinary.js'; // Just import to initialize, don't call it
 
 // Load environment variables
 dotenv.config();
 
 // Initialize express app
 const app = express();
-const port = process.env.PORT || 5000
+const port = process.env.PORT || 5000;
+
+// Connect to MongoDB
+connectDB();
 
 // Middleware
 app.use(express.json());
