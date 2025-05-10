@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import api from '../../config/api';
 
-const AddProduct = () => {
+const EditProduct = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const { id } = useParams();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -12,11 +14,39 @@ const AddProduct = () => {
     price: '',
     category: '',
     imageUrl: '',
-    inStock: true,
+    stock: 0,
     dosage: '',
     precautions: '',
     featured: false
   });
+
+  useEffect(() => {
+    fetchProduct();
+  }, [id]);
+
+  const fetchProduct = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        setError('Authentication required');
+        return;
+      }
+
+      const response = await api.get(`/products/${id}`);
+      if (response.data.success) {
+        setFormData(response.data.data);
+        setError(null);
+      } else {
+        setError('Failed to fetch product details');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch product details');
+      console.error('Error fetching product:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -28,29 +58,45 @@ const AddProduct = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
     setError(null);
 
     try {
-      await axios.post('http://localhost:5000/api/products', formData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      });
-      navigate('/admin/products');
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        setError('Authentication required');
+        return;
+      }
+
+      const response = await api.put(`/products/${id}`, formData);
+
+      if (response.data.success) {
+        alert('Product updated successfully');
+        navigate('/admin/products');
+      } else {
+        setError(response.data.message || 'Failed to update product');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create product');
-      console.error('Error creating product:', err);
+      setError(err.response?.data?.message || 'Failed to update product. Please try again.');
+      console.error('Error updating product:', err);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-std"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-neutral-dark">Add New Product</h1>
-        <p className="text-neutral-std mt-1">Create a new product in your inventory</p>
+        <h1 className="text-2xl font-bold text-neutral-dark">Edit Product</h1>
+        <p className="text-neutral-std mt-1">Update product information</p>
       </div>
 
       {error && (
@@ -105,6 +151,21 @@ const AddProduct = () => {
               required
               min="0"
               step="0.01"
+              className="w-full px-4 py-2 border border-neutral-light rounded-lg focus:ring-2 focus:ring-primary-std focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-neutral-dark mb-2">
+              Stock
+            </label>
+            <input
+              type="number"
+              name="stock"
+              value={formData.stock}
+              onChange={handleChange}
+              required
+              min="0"
               className="w-full px-4 py-2 border border-neutral-light rounded-lg focus:ring-2 focus:ring-primary-std focus:border-transparent"
             />
           </div>
@@ -166,17 +227,6 @@ const AddProduct = () => {
             <label className="flex items-center">
               <input
                 type="checkbox"
-                name="inStock"
-                checked={formData.inStock}
-                onChange={handleChange}
-                className="rounded border-neutral-light text-primary-std focus:ring-primary-std"
-              />
-              <span className="ml-2 text-sm text-neutral-dark">In Stock</span>
-            </label>
-
-            <label className="flex items-center">
-              <input
-                type="checkbox"
                 name="featured"
                 checked={formData.featured}
                 onChange={handleChange}
@@ -197,10 +247,10 @@ const AddProduct = () => {
           </button>
           <button
             type="submit"
-            disabled={loading}
-            className="px-4 py-2 bg-primary-std text-white rounded-lg hover:bg-primary-dark disabled:opacity-50"
+            disabled={saving}
+            className="px-4 py-2 bg-primary-std text-white rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Creating...' : 'Create Product'}
+            {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </form>
@@ -208,4 +258,4 @@ const AddProduct = () => {
   );
 };
 
-export default AddProduct; 
+export default EditProduct; 

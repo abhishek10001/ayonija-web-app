@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation, Outlet } from 'react-router-dom';
+import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { 
   FiPackage, 
   FiPlusCircle, 
@@ -15,10 +15,21 @@ import {
   FiBell,
   FiUser
 } from 'react-icons/fi';
+import api from '../../utils/api';
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   
+  const handleLogout = async () => {
+    try {
+      await api.post('/admin/signout');
+      navigate('/admin/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   const menuItems = [
     { path: '/admin/dashboard', icon: <FiGrid size={20} />, label: 'Dashboard' },
     { path: '/admin/products', icon: <FiPackage size={20} />, label: 'Listed Products' },
@@ -62,7 +73,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         </div>
 
         <nav className="flex-1 overflow-y-auto py-2 px-3">
-          <div className=" px-3 ">
+          <div className="px-3">
             <h3 className="text-xs font-semibold text-neutral-std uppercase tracking-wider">Main</h3>
           </div>
           {menuItems.slice(0, 1).map((item) => (
@@ -79,7 +90,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             </Link>
           ))}
 
-          <div className="mt-2 px-3 ">
+          <div className="mt-2 px-3">
             <h3 className="text-xs font-semibold text-neutral-std uppercase tracking-wider">Products</h3>
           </div>
           {menuItems.slice(1, 3).map((item) => (
@@ -96,7 +107,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             </Link>
           ))}
 
-          <div className=" mt-2 px-3 ">
+          <div className="mt-2 px-3">
             <h3 className="text-xs font-semibold text-neutral-std uppercase tracking-wider">Careers</h3>
           </div>
           {menuItems.slice(3, 6).map((item) => (
@@ -113,7 +124,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             </Link>
           ))}
 
-          <div className="mb-2 mt-2 px-3 ">
+          <div className="mb-2 mt-2 px-3">
             <h3 className="text-xs font-semibold text-neutral-std uppercase tracking-wider">Marketing</h3>
           </div>
           {menuItems.slice(6).map((item) => (
@@ -147,6 +158,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             </div>
           </div>
           <button 
+            onClick={handleLogout}
             className="flex items-center w-full px-4 py-2 text-sm font-medium text-neutral-std hover:text-primary-std transition-colors duration-200 rounded-lg hover:bg-primary-light/50"
           >
             <FiLogOut size={18} className="mr-3" />
@@ -169,7 +181,7 @@ const AdminLayout = () => {
     <div className="min-h-screen bg-neutral-50">
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       
-      <div className="lg:ml-72 min-h-screen">
+      <div className={`lg:ml-72 min-h-screen transition-all duration-300 ${isSidebarOpen ? 'ml-72' : 'ml-0'}`}>
         {/* Header */}
         <header className="bg-white shadow-sm sticky top-0 z-40">
           <div className="flex items-center justify-between px-6 py-4">

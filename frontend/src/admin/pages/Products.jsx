@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   FiSearch, 
@@ -9,26 +9,93 @@ import {
   FiChevronLeft,
   FiChevronRight
 } from 'react-icons/fi';
+import api from '../../config/api';
 
 const Products = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState('all');
-
-  // Dummy data - replace with your actual data
-  const products = [
-    { id: 1, name: 'Pain Relief Gel', category: 'OTC', stock: 150, price: 12.99, status: 'In Stock' },
-    { id: 2, name: 'Vitamin C', category: 'Supplements', stock: 200, price: 24.99, status: 'In Stock' },
-    { id: 3, name: 'Antibiotics', category: 'Prescription', stock: 0, price: 45.99, status: 'Out of Stock' },
-    // Add more products...
-  ];
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const categories = ['all', 'OTC', 'Supplements', 'Prescription'];
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        setError('Authentication required');
+        return;
+      }
+
+      const response = await api.get('/products');
+      if (response.data.success) {
+        setProducts(response.data.data);
+        setError(null);
+      } else {
+        setError('Failed to fetch products');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch products');
+      console.error('Error fetching products:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('adminToken');
+        if (!token) {
+          alert('Authentication required');
+          return;
+        }
+
+        const response = await api.delete(`/products/${id}`);
+        
+        if (response.data.success) {
+          setProducts(products.filter(product => product._id !== id));
+          alert('Product deleted successfully');
+        } else {
+          alert(response.data.message || 'Failed to delete product');
+        }
+      } catch (err) {
+        console.error('Error deleting product:', err);
+        alert(err.response?.data?.message || 'Failed to delete product. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
   const filteredProducts = products.filter(product => 
     (selectedCategory === 'all' || product.category === selectedCategory) &&
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-std"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-alert-error p-4">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -95,7 +162,7 @@ const Products = () => {
             </thead>
             <tbody className="divide-y divide-neutral-light">
               {filteredProducts.map((product) => (
-                <tr key={product.id} className="hover:bg-neutral-50">
+                <tr key={product._id} className="hover:bg-neutral-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-neutral-dark">{product.name}</div>
                   </td>
@@ -110,18 +177,21 @@ const Products = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      product.status === 'In Stock' 
+                      product.stock > 0 
                         ? 'bg-alert-success/10 text-alert-success' 
                         : 'bg-alert-error/10 text-alert-error'
                     }`}>
-                      {product.status}
+                      {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button className="text-primary-std hover:text-primary-dark mr-3">
+                    <Link to={`/admin/products/edit/${product._id}`} className="text-primary-std hover:text-primary-dark mr-3">
                       <FiEdit2 size={18} />
-                    </button>
-                    <button className="text-alert-error hover:text-alert-error/80">
+                    </Link>
+                    <button 
+                      onClick={() => handleDelete(product._id)}
+                      className="text-alert-error hover:text-alert-error/80"
+                    >
                       <FiTrash2 size={18} />
                     </button>
                   </td>
@@ -134,7 +204,7 @@ const Products = () => {
         {/* Pagination */}
         <div className="px-6 py-4 flex items-center justify-between border-t border-neutral-light">
           <div className="text-sm text-neutral-std">
-            Showing <span className="font-medium">1</span> to <span className="font-medium">10</span> of{' '}
+            Showing <span className="font-medium">1</span> to <span className="font-medium">{filteredProducts.length}</span> of{' '}
             <span className="font-medium">{filteredProducts.length}</span> results
           </div>
           <div className="flex items-center space-x-2">

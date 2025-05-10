@@ -1,12 +1,13 @@
 import express from 'express';
 
-import { handleAdminSignIn, handleSignOut } from '../controllers/adminController.js';
+import { handleAdminSignIn, handleSignOut, verify } from '../controllers/adminController.js';
 import { verifyAdmin } from '../middlewares/auth.js';
 
 // Public routes
 const adminRouter = express.Router();
 adminRouter.post('/signin', handleAdminSignIn);
 adminRouter.post('/signout', handleSignOut);
+adminRouter.get('/verify', verify);
 
 // Protected routes (require admin authentication)
 adminRouter.use(verifyAdmin);
