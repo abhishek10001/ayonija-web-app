@@ -1,17 +1,22 @@
 import { Navigate, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import api from '../config/api';
+import { useState, useEffect, useContext } from 'react';
+import { AdminContext } from '../admin/context/AdminContext';
 
 const ProtectedRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
+  const { adminToken } = useContext(AdminContext);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await api.get('/admin/verify');
-        setIsAuthenticated(response.data.success);
+        if (!adminToken) {
+          setIsAuthenticated(false);
+          setLoading(false);
+          return;
+        }
+        setIsAuthenticated(true);
       } catch (error) {
         setIsAuthenticated(false);
       } finally {
@@ -20,7 +25,7 @@ const ProtectedRoute = ({ children }) => {
     };
 
     checkAuth();
-  }, []);
+  }, [adminToken]);
 
   if (loading) {
     return (

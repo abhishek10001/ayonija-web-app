@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   FiSearch, 
   FiFilter, 
@@ -13,60 +13,86 @@ import {
   FiMapPin,
   FiX
 } from 'react-icons/fi';
+import { AdminContext } from '../context/AdminContext';
+import { toast } from 'react-toastify';
 
 const Jobs = () => {
+  const navigate = useNavigate();
+  const { postedJobs, loading, getPostedJobs, deleteJob, adminToken } = useContext(AdminContext);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedType, setSelectedType] = useState('all');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
+  const [error, setError] = useState(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Dummy data - replace with your actual data
-  const jobs = [
-    {
-      id: 1,
-      title: 'Clinical Pharmacist',
-      type: 'Full-Time',
-      location: 'New York, NY',
-      department: 'Pharmacy',
-      postedDate: '2024-03-15',
-      deadline: '2024-04-15',
-      status: 'Active',
-      applications: 12,
-    },
-    {
-      id: 2,
-      title: 'Pharmacy Technician',
-      type: 'Part-Time',
-      location: 'Los Angeles, CA',
-      department: 'Pharmacy',
-      postedDate: '2024-03-10',
-      deadline: '2024-04-10',
-      status: 'Active',
-      applications: 8,
-    },
-    // Add more jobs...
-  ];
+  const jobTypes = ['all', 'full-time', 'part-time', 'contract', 'internship'];
 
-  const jobTypes = ['all', 'Full-Time', 'Part-Time', 'Contract'];
+  useEffect(() => {
+    const fetchJobs = async () => {
+      if (!adminToken) return;
+      try {
+        await getPostedJobs();
+      } catch (error) {
+        setError('Failed to load jobs');
+        toast.error('Failed to load jobs');
+      } finally {
+        setIsInitialLoad(false);
+      }
+    };
 
-  const filteredJobs = jobs.filter(job =>
+    if (isInitialLoad) {
+      fetchJobs();
+    }
+  }, [adminToken, getPostedJobs, isInitialLoad]);
+
+  const filteredJobs = postedJobs.filter(job =>
     (selectedType === 'all' || job.type === selectedType) &&
     (job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
      job.location.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const handleEdit = (job) => {
+    navigate(`/admin/jobs/edit/${job._id}`);
+  };
 
   const handleDelete = (job) => {
     setSelectedJob(job);
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
-    // Here you would make an API call to delete the job
-    console.log('Deleting job:', selectedJob);
-    setShowDeleteModal(false);
-    setSelectedJob(null);
+  const confirmDelete = async () => {
+    try {
+      const success = await deleteJob(selectedJob._id);
+      if (success) {
+        toast.success('Job deleted successfully');
+        setShowDeleteModal(false);
+        setSelectedJob(null);
+        // Refresh jobs after deletion
+        await getPostedJobs();
+      }
+    } catch (error) {
+      toast.error('Failed to delete job');
+      setError('Failed to delete job');
+    }
   };
+
+  if (loading && isInitialLoad) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-std"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-alert-error p-4">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -84,55 +110,59 @@ const Jobs = () => {
         </Link>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-xl shadow-sm mb-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          {/* Search */}
-          <div className="relative flex-1">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-std" size={20} />
+      {/* Search and Filter */}
+      <div className="mb-6 flex flex-col md:flex-row gap-4">
+        <div className="flex-1">
+          <div className="relative">
             <input
               type="text"
               placeholder="Search jobs..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-neutral-light rounded-lg focus:ring-2 focus:ring-primary-std focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-std"
             />
+            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-std" />
           </div>
-
-          {/* Job Type Filter */}
-          <div className="flex items-center space-x-2">
-            <FiFilter className="text-neutral-std" size={20} />
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="border border-neutral-light rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-std focus:border-transparent"
-            >
-              {jobTypes.map(type => (
-                <option key={type} value={type}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <FiFilter className="text-neutral-std" />
+          <select
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value)}
+            className="px-4 py-2 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-std"
+          >
+            {jobTypes.map(type => (
+              <option key={type} value={type}>
+                {type.charAt(0).toUpperCase() + type.slice(1)}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
       {/* Jobs Table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="min-w-full divide-y divide-neutral-light">
             <thead className="bg-neutral-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-std uppercase tracking-wider">Job Details</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-std uppercase tracking-wider">Department</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-std uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-std uppercase tracking-wider">Applications</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-neutral-std uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-std uppercase tracking-wider">
+                  Job Details
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-std uppercase tracking-wider">
+                  Department
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-std uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-neutral-std uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-light">
               {filteredJobs.map((job) => (
-                <tr key={job.id} className="hover:bg-neutral-50">
+                <tr key={job._id} className="hover:bg-neutral-50">
                   <td className="px-6 py-4">
                     <div className="flex items-start">
                       <div className="flex-shrink-0">
@@ -149,10 +179,8 @@ const Jobs = () => {
                         <div className="text-xs text-neutral-std mt-1">
                           <span className="inline-flex items-center">
                             <FiCalendar className="mr-1" size={12} />
-                            Posted {new Date(job.postedDate).toLocaleDateString()}
+                            Posted {new Date(job.createdAt).toLocaleDateString()}
                           </span>
-                          <span className="mx-2">•</span>
-                          <span>Deadline {new Date(job.deadline).toLocaleDateString()}</span>
                         </div>
                       </div>
                     </div>
@@ -162,86 +190,54 @@ const Jobs = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      job.status === 'Active' ? 'bg-alert-success/10 text-alert-success' : 'bg-alert-error/10 text-alert-error'
+                      job.status === 'active' ? 'bg-alert-success/10 text-alert-success' : 'bg-alert-error/10 text-alert-error'
                     }`}>
                       {job.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Link
-                      to={`/admin/applications?job=${job.id}`}
-                      className="text-sm text-primary-std hover:text-primary-dark"
-                    >
-                      {job.applications} applications
-                    </Link>
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Link
-                      to={`/admin/jobs/edit/${job.id}`}
-                      className="text-primary-std hover:text-primary-dark mr-3"
-                    >
-                      <FiEdit2 size={18} />
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(job)}
-                      className="text-alert-error hover:text-alert-error-dark"
-                    >
-                      <FiTrash2 size={18} />
-                    </button>
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        onClick={() => handleEdit(job)}
+                        className="text-primary-std hover:text-primary-dark"
+                      >
+                        <FiEdit2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(job)}
+                        className="text-alert-error hover:text-alert-error-dark"
+                      >
+                        <FiTrash2 size={18} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-
-        {/* Pagination */}
-        <div className="px-6 py-4 flex items-center justify-between border-t border-neutral-light">
-          <div className="text-sm text-neutral-std">
-            Showing <span className="font-medium">1</span> to <span className="font-medium">10</span> of{' '}
-            <span className="font-medium">{filteredJobs.length}</span> jobs
-          </div>
-          <div className="flex items-center space-x-2">
-            <button
-              className="p-2 rounded-lg hover:bg-neutral-light transition-colors duration-200"
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              <FiChevronLeft size={20} />
-            </button>
-            <button
-              className="p-2 rounded-lg hover:bg-neutral-light transition-colors duration-200"
-              onClick={() => setCurrentPage(prev => prev + 1)}
-            >
-              <FiChevronRight size={20} />
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && selectedJob && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-medium text-neutral-dark mb-4">
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold text-neutral-dark mb-4">
               Delete Job Posting
             </h3>
             <p className="text-neutral-std mb-6">
-              Are you sure you want to delete "{selectedJob.title}"? This action cannot be undone.
+              Are you sure you want to delete the job posting "{selectedJob?.title}"? This action cannot be undone.
             </p>
             <div className="flex justify-end space-x-4">
               <button
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setSelectedJob(null);
-                }}
-                className="px-4 py-2 border border-neutral-light rounded-lg text-neutral-std hover:bg-neutral-light transition-colors duration-200"
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 text-sm font-medium text-neutral-std hover:text-neutral-dark border border-neutral-light rounded-lg hover:bg-neutral-50"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                className="px-4 py-2 bg-alert-error text-white rounded-lg hover:bg-alert-error-dark transition-colors duration-200"
+                className="px-4 py-2 text-sm font-medium text-white bg-alert-error rounded-lg hover:bg-alert-error-dark"
               >
                 Delete
               </button>

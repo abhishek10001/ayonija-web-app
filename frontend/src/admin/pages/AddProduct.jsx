@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { AdminContext } from '../context/AdminContext';
+import { toast } from 'react-toastify';
+import { FiSave, FiX } from 'react-icons/fi';
 
 const AddProduct = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const { createProduct, uploadImage, loading } = useContext(AdminContext);
   const [error, setError] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: '',
     category: '',
-    imageUrl: '',
+    image: '',
     inStock: true,
     dosage: '',
     precautions: '',
@@ -26,31 +30,105 @@ const AddProduct = () => {
     }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select an image file');
+        return;
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image size should be less than 5MB');
+        return;
+      }
+      setImageFile(file);
+      setError(null);
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+    }
+  };
+
+  const validateForm = () => {
+    if (!formData.name.trim()) {
+      setError('Product name is required');
+      return false;
+    }
+    if (!formData.category) {
+      setError('Category is required');
+      return false;
+    }
+    if (!formData.price || formData.price <= 0) {
+      setError('Please enter a valid price');
+      return false;
+    }
+    if (!formData.description.trim()) {
+      setError('Description is required');
+      return false;
+    }
+    if (!imageFile && !formData.image) {
+      setError('Product image is required');
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
+    if (!validateForm()) {
+      return;
+    }
+
     try {
-      await axios.post('http://localhost:5000/api/products', formData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('adminToken')}`
+      let imageUrl = formData.image;
+
+      // If there's a new image file, upload it to Cloudinary
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile);
+        if (!imageUrl) {
+          throw new Error('Failed to upload image');
         }
-      });
-      navigate('/admin/products');
+      }
+
+      const productData = {
+        ...formData,
+        image: imageUrl,
+        price: parseFloat(formData.price)
+      };
+
+      const success = await createProduct(productData);
+
+      if (success) {
+        toast.success('Product created successfully');
+        navigate('/admin/products');
+      } else {
+        throw new Error('Failed to create product');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create product');
+      setError(err.message || 'Failed to create product');
+      toast.error(err.message || 'Failed to create product');
       console.error('Error creating product:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-neutral-dark">Add New Product</h1>
-        <p className="text-neutral-std mt-1">Create a new product in your inventory</p>
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-neutral-dark">Add New Product</h1>
+          <p className="text-neutral-std mt-1">Create a new product in your inventory</p>
+        </div>
+        <button
+          onClick={() => navigate('/admin/products')}
+          className="flex items-center text-neutral-std hover:text-neutral-dark"
+        >
+          <FiX className="mr-1" />
+          Cancel
+        </button>
       </div>
 
       {error && (
@@ -111,15 +189,23 @@ const AddProduct = () => {
 
           <div>
             <label className="block text-sm font-medium text-neutral-dark mb-2">
-              Image URL
+              Product Image
             </label>
             <input
-              type="url"
-              name="imageUrl"
-              value={formData.imageUrl}
-              onChange={handleChange}
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
               className="w-full px-4 py-2 border border-neutral-light rounded-lg focus:ring-2 focus:ring-primary-std focus:border-transparent"
             />
+            {imagePreview && (
+              <div className="mt-2">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="h-32 w-32 object-cover rounded-lg"
+                />
+              </div>
+            )}
           </div>
 
           <div className="md:col-span-2">
@@ -198,8 +284,9 @@ const AddProduct = () => {
           <button
             type="submit"
             disabled={loading}
-            className="px-4 py-2 bg-primary-std text-white rounded-lg hover:bg-primary-dark disabled:opacity-50"
+            className="px-4 py-2 bg-primary-std text-white rounded-lg hover:bg-primary-dark disabled:opacity-50 flex items-center"
           >
+            <FiSave className="mr-2" />
             {loading ? 'Creating...' : 'Create Product'}
           </button>
         </div>

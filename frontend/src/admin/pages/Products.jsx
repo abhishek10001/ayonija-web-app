@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   FiSearch, 
@@ -9,69 +9,30 @@ import {
   FiChevronLeft,
   FiChevronRight
 } from 'react-icons/fi';
-import api from '../../config/api';
+import { AdminContext } from '../context/AdminContext';
 
 const Products = () => {
+  const { products, loading, getAllProducts, deleteProduct } = useContext(AdminContext);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const categories = ['all', 'OTC', 'Supplements', 'Prescription'];
 
   useEffect(() => {
-    fetchProducts();
+    getAllProducts();
   }, []);
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('adminToken');
-      if (!token) {
-        setError('Authentication required');
-        return;
-      }
-
-      const response = await api.get('/products');
-      if (response.data.success) {
-        setProducts(response.data.data);
-        setError(null);
-      } else {
-        setError('Failed to fetch products');
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch products');
-      console.error('Error fetching products:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+    if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        setLoading(true);
-        const token = localStorage.getItem('adminToken');
-        if (!token) {
-          alert('Authentication required');
-          return;
+        const success = await deleteProduct(id);
+        if (success) {
+          // Product list will be automatically refreshed by the context
         }
-
-        const response = await api.delete(`/products/${id}`);
-        
-        if (response.data.success) {
-          setProducts(products.filter(product => product._id !== id));
-          alert('Product deleted successfully');
-        } else {
-          alert(response.data.message || 'Failed to delete product');
-        }
-      } catch (err) {
-        console.error('Error deleting product:', err);
-        alert(err.response?.data?.message || 'Failed to delete product. Please try again.');
-      } finally {
-        setLoading(false);
+      } catch (error) {
+        setError('Failed to delete product');
       }
     }
   };

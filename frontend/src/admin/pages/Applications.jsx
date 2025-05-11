@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   FiSearch, 
@@ -6,48 +6,88 @@ import {
   FiMail, 
   FiDownload,
   FiEye,
-  FiChevronLeft,
-  FiChevronRight,
   FiX
 } from 'react-icons/fi';
+import { AdminContext } from '../context/AdminContext';
+import { toast } from 'react-toastify';
 
 const Applications = () => {
   const [searchParams] = useSearchParams();
   const jobId = searchParams.get('job');
+  const { getJobApplications, updateApplicationStatus, loading } = useContext(AdminContext);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
+  const [applications, setApplications] = useState([]);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Dummy data - replace with your actual data
-  const applications = [
-    {
-      id: 1,
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      jobTitle: 'Clinical Pharmacist',
-      appliedDate: '2024-03-15',
-      status: 'Under Review',
-      coverLetter: 'I am writing to express my strong interest...',
-      documentLinks: 'https://drive.google.com/file/xyz',
-    },
-    // Add more applications...
-  ];
+  const statuses = ['pending', 'shortlisted', 'rejected', 'hired', 'under review', 'accepted'];
 
-  const statuses = ['all', 'Under Review', 'Shortlisted', 'Rejected', 'Hired'];
+  useEffect(() => {
+    const fetchApplications = async () => {
+      try {
+        const response = await getJobApplications(1, 1000); // Fetch all applications
+        if (response && response.applications) {
+          setApplications(response.applications);
+        }
+        setIsInitialLoad(false);
+      } catch (error) {
+        console.error('Error fetching applications:', error);
+        toast.error('Failed to load applications');
+      }
+    };
 
-  const filteredApplications = applications.filter(app => 
-    (selectedStatus === 'all' || app.status === selectedStatus) &&
-    (app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     app.email.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+    if (isInitialLoad) {
+      fetchApplications();
+    }
+  }, [getJobApplications, isInitialLoad]);
+
+  const filteredApplications = applications.filter(app => {
+    if (!app) return false;
+    
+    const matchesStatus = selectedStatus === 'all' || app.status === selectedStatus;
+    const matchesSearch = !searchTerm || (
+      (app.applicantName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (app.email?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+    );
+    
+    return matchesStatus && matchesSearch;
+  });
 
   const handleViewApplication = (application) => {
+    if (!application) return;
     setSelectedApplication(application);
     setShowApplicationModal(true);
   };
+
+  const handleStatusUpdate = async (applicationId, newStatus) => {
+    if (!applicationId || !newStatus) return;
+    
+    try {
+      const success = await updateApplicationStatus(applicationId, newStatus);
+      if (success) {
+        setApplications(prevApplications =>
+          prevApplications.map(app =>
+            app._id === applicationId ? { ...app, status: newStatus } : app
+          )
+        );
+        setSelectedApplication(prev => prev ? { ...prev, status: newStatus } : null);
+      }
+    } catch (error) {
+      console.error('Error updating application status:', error);
+      toast.error('Failed to update application status');
+    }
+  };
+
+  if (loading && isInitialLoad) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-std"></div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -104,28 +144,57 @@ const Applications = () => {
             </thead>
             <tbody className="divide-y divide-neutral-light">
               {filteredApplications.map((application) => (
-                <tr key={application.id} className="hover:bg-neutral-50">
+                <tr key={application._id} className="hover:bg-neutral-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-neutral-dark">{application.name}</div>
-                    <div className="text-xs text-neutral-std">{application.email}</div>
+                    <div className="text-sm font-medium text-neutral-dark">{application.name || 'N/A'}</div>
+                    <div className="text-xs text-neutral-std">{application.email || 'N/A'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-neutral-std">{application.jobTitle}</div>
+                    <div className="text-sm text-neutral-std">{application.jobTitle || 'N/A'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-neutral-std">
-                      {new Date(application.appliedDate).toLocaleDateString()}
+                      {application.appliedAt ? new Date(application.appliedAt).toLocaleDateString() : 'N/A'}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      application.status === 'Under Review' ? 'bg-primary-light text-primary-std' :
-                      application.status === 'Shortlisted' ? 'bg-secondary-light text-secondary-std' :
-                      application.status === 'Hired' ? 'bg-alert-success/10 text-alert-success' :
-                      'bg-alert-error/10 text-alert-error'
-                    }`}>
-                      {application.status}
-                    </span>
+                    <select
+                      value={application.status || 'pending'}
+                      onChange={e => handleStatusUpdate(application._id, e.target.value)}
+                      className="px-2 py-1 text-xs font-medium rounded-full border focus:outline-none"
+                      style={{
+                        background:
+                          application.status === 'pending'
+                            ? '#D1FAE5'
+                            : application.status === 'shortlisted'
+                            ? '#E0E7FF'
+                            : application.status === 'hired'
+                            ? '#DCFCE7'
+                            : application.status === 'under review'
+                            ? '#FEF9C3'
+                            : application.status === 'accepted'
+                            ? '#BBF7D0'
+                            : '#FEE2E2',
+                        color:
+                          application.status === 'pending'
+                            ? '#10B981'
+                            : application.status === 'shortlisted'
+                            ? '#6366F1'
+                            : application.status === 'hired'
+                            ? '#22C55E'
+                            : application.status === 'under review'
+                            ? '#F59E42'
+                            : application.status === 'accepted'
+                            ? '#15803D'
+                            : '#EF4444',
+                      }}
+                    >
+                      {statuses.map(status => (
+                        <option key={status} value={status}>
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </option>
+                      ))}
+                    </select>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
@@ -134,48 +203,29 @@ const Applications = () => {
                     >
                       <FiEye size={18} />
                     </button>
-                    <a
-                      href={`mailto:${application.email}`}
-                      className="text-primary-std hover:text-primary-dark mr-3"
-                    >
-                      <FiMail size={18} />
-                    </a>
-                    <a
-                      href={application.documentLinks}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary-std hover:text-primary-dark"
-                    >
-                      <FiDownload size={18} />
-                    </a>
+                    {application.email && (
+                      <a
+                        href={`mailto:${application.email}`}
+                        className="text-primary-std hover:text-primary-dark mr-3"
+                      >
+                        <FiMail size={18} />
+                      </a>
+                    )}
+                    {application.resumeUrl && (
+                      <a
+                        href={application.resumeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-std hover:text-primary-dark"
+                      >
+                        <FiDownload size={18} />
+                      </a>
+                    )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="px-6 py-4 flex items-center justify-between border-t border-neutral-light">
-          <div className="text-sm text-neutral-std">
-            Showing <span className="font-medium">1</span> to <span className="font-medium">10</span> of{' '}
-            <span className="font-medium">{filteredApplications.length}</span> results
-          </div>
-          <div className="flex items-center space-x-2">
-            <button
-              className="p-2 rounded-lg hover:bg-neutral-light transition-colors duration-200"
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              <FiChevronLeft size={20} />
-            </button>
-            <button
-              className="p-2 rounded-lg hover:bg-neutral-light transition-colors duration-200"
-              onClick={() => setCurrentPage(prev => prev + 1)}
-            >
-              <FiChevronRight size={20} />
-            </button>
-          </div>
         </div>
       </div>
 
@@ -195,7 +245,7 @@ const Applications = () => {
                 Application Details
               </h3>
               <p className="text-neutral-std">
-                For {selectedApplication.jobTitle}
+                For {selectedApplication.jobTitle || 'N/A'}
               </p>
             </div>
 
@@ -205,13 +255,13 @@ const Applications = () => {
                 <h4 className="text-sm font-medium text-neutral-dark mb-2">Applicant Information</h4>
                 <div className="bg-neutral-50 rounded-lg p-4 space-y-2">
                   <p className="text-sm">
-                    <span className="font-medium">Name:</span> {selectedApplication.name}
+                    <span className="font-medium">Name:</span> {selectedApplication.applicantName || 'N/A'}
                   </p>
                   <p className="text-sm">
-                    <span className="font-medium">Email:</span> {selectedApplication.email}
+                    <span className="font-medium">Email:</span> {selectedApplication.email || 'N/A'}
                   </p>
                   <p className="text-sm">
-                    <span className="font-medium">Applied:</span> {new Date(selectedApplication.appliedDate).toLocaleDateString()}
+                    <span className="font-medium">Applied:</span> {selectedApplication.appliedAt ? new Date(selectedApplication.appliedAt).toLocaleDateString() : 'N/A'}
                   </p>
                 </div>
               </div>
@@ -221,41 +271,40 @@ const Applications = () => {
                 <h4 className="text-sm font-medium text-neutral-dark mb-2">Cover Letter</h4>
                 <div className="bg-neutral-50 rounded-lg p-4">
                   <p className="text-sm whitespace-pre-line">
-                    {selectedApplication.coverLetter}
+                    {selectedApplication.coverLetter || 'No cover letter provided'}
                   </p>
                 </div>
               </div>
 
-              {/* Document Links */}
-              <div>
-                <h4 className="text-sm font-medium text-neutral-dark mb-2">Documents</h4>
-                <div className="bg-neutral-50 rounded-lg p-4">
-                  <a
-                    href={selectedApplication.documentLinks}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-primary-std hover:text-primary-dark inline-flex items-center"
-                  >
-                    <FiDownload className="mr-2" size={16} />
-                    View Documents
-                  </a>
+              {/* Resume */}
+              {selectedApplication.resumeUrl && (
+                <div>
+                  <h4 className="text-sm font-medium text-neutral-dark mb-2">Resume</h4>
+                  <div className="bg-neutral-50 rounded-lg p-4">
+                    <a
+                      href={selectedApplication.resumeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary-std hover:text-primary-dark inline-flex items-center"
+                    >
+                      <FiDownload className="mr-2" size={16} />
+                      View Resume
+                    </a>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Status Update */}
               <div>
                 <h4 className="text-sm font-medium text-neutral-dark mb-2">Update Status</h4>
                 <select
-                  value={selectedApplication.status}
-                  onChange={(e) => {
-                    // Here you would update the application status
-                    console.log('Status updated:', e.target.value);
-                  }}
+                  value={selectedApplication.status || 'pending'}
+                  onChange={(e) => handleStatusUpdate(selectedApplication._id, e.target.value)}
                   className="w-full px-4 py-2 border border-neutral-light rounded-lg focus:ring-2 focus:ring-primary-std focus:border-transparent"
                 >
-                  {statuses.filter(status => status !== 'all').map(status => (
+                  {statuses.map(status => (
                     <option key={status} value={status}>
-                      {status}
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
                     </option>
                   ))}
                 </select>

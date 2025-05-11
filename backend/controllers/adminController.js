@@ -145,14 +145,7 @@ export const handleAdminSignIn = async (req, res) => {
       { expiresIn: '15m' } // Token expires in 15 minutes
     );
 
-    // Set cookie with token
-    res.cookie('adminToken', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 15 * 60 * 1000 // 15 minutes in milliseconds
-    });
-
+    // Send token in response body instead of cookie
     res.status(200).json({
       success: true,
       message: 'Login successful',
@@ -160,7 +153,8 @@ export const handleAdminSignIn = async (req, res) => {
         id: admin._id,
         email: admin.email,
         name: admin.name,
-        role: admin.role
+        role: admin.role,
+        token // Include token in response
       }
     });
   } catch (error) {
@@ -194,7 +188,8 @@ export const handleSignOut = async (req, res) => {
 
 export const verify = async (req, res) => {
   try {
-    const token = req.cookies.adminToken;
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
     
     if (!token) {
       return res.status(401).json({
@@ -203,35 +198,39 @@ export const verify = async (req, res) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const admin = await Admin.findById(decoded.id);
-
-    if (!admin) {
-      return res.status(401).json({
-        success: false,
-        message: 'Admin not found'
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: {
-        id: admin._id,
-        email: admin.email,
-        name: admin.name,
-        role: admin.role
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const admin = await Admin.findById(decoded.id).select('-password');
+      
+      if (!admin) {
+        return res.status(401).json({
+          success: false,
+          message: 'Admin not found'
+        });
       }
-    });
-  } catch (error) {
-    if (error.name === 'TokenExpiredError') {
+
+      res.status(200).json({
+        success: true,
+        message: 'Token is valid',
+        data: {
+          id: admin._id,
+          email: admin.email,
+          name: admin.name,
+          role: admin.role
+        }
+      });
+    } catch (error) {
       return res.status(401).json({
         success: false,
-        message: 'Session expired. Please login again.'
+        message: 'Invalid token'
       });
     }
-    res.status(401).json({
+  } catch (error) {
+    console.error('Error in verify:', error);
+    res.status(500).json({
       success: false,
-      message: 'Invalid token'
+      message: 'Error verifying token',
+      error: error.message
     });
   }
 };

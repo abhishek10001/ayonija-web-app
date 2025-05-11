@@ -1,90 +1,156 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import api from '../../config/api';
+import { AdminContext } from '../context/AdminContext';
+import { toast } from 'react-toastify';
+import { FiSave, FiX } from 'react-icons/fi';
 
 const EditProduct = () => {
-  const navigate = useNavigate();
   const { id } = useParams();
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { getProduct, updateProduct, uploadImage, loading } = useContext(AdminContext);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: '',
     category: '',
-    imageUrl: '',
+    image: '',
     stock: 0,
     dosage: '',
     precautions: '',
     featured: false
   });
 
+  const fetchProduct = useCallback(async () => {
+    if (!isInitialLoad) return;
+    
+    try {
+      const product = await getProduct(id);
+      if (product) {
+        setFormData({
+          name: product.name || '',
+          description: product.description || '',
+          price: product.price || '',
+          image: product.image || '',
+          category: product.category || '',
+          stock: product.stock || 0,
+          dosage: product.dosage || '',
+          precautions: product.precautions || '',
+          featured: product.featured || false
+        });
+        setImagePreview(product.image || null);
+      }
+    } catch (error) {
+      setError('Failed to load product');
+      toast.error('Failed to load product');
+    } finally {
+      setIsInitialLoad(false);
+    }
+  }, [id, getProduct, isInitialLoad]);
+
   useEffect(() => {
     fetchProduct();
-  }, [id]);
+  }, [fetchProduct]);
 
-  const fetchProduct = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('adminToken');
-      if (!token) {
-        setError('Authentication required');
-        return;
-      }
-
-      const response = await api.get(`/products/${id}`);
-      if (response.data.success) {
-        setFormData(response.data.data);
-        setError(null);
-      } else {
-        setError('Failed to fetch product details');
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch product details');
-      console.error('Error fetching product:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleChange = (e) => {
+  const handleChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-  };
+  }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    setError(null);
-
-    try {
-      const token = localStorage.getItem('adminToken');
-      if (!token) {
-        setError('Authentication required');
+  const handleImageChange = useCallback((e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select an image file');
         return;
       }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image size should be less than 5MB');
+        return;
+      }
+      setImageFile(file);
+      setError(null);
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+    }
+  }, []);
 
-      const response = await api.put(`/products/${id}`, formData);
+  const validateForm = useCallback(() => {
+    if (!formData.name.trim()) {
+      setError('Product name is required');
+      return false;
+    }
+    if (!formData.category) {
+      setError('Category is required');
+      return false;
+    }
+    if (!formData.price || formData.price <= 0) {
+      setError('Please enter a valid price');
+      return false;
+    }
+    if (!formData.description.trim()) {
+      setError('Description is required');
+      return false;
+    }
+    return true;
+  }, [formData]);
 
-      if (response.data.success) {
-        alert('Product updated successfully');
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      let imageUrl = formData.image;
+
+      // If there's a new image file, upload it to Cloudinary
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile);
+        if (!imageUrl) {
+          throw new Error('Failed to upload image');
+        }
+      }
+
+      const productData = {
+        ...formData,
+        image: imageUrl,
+        price: parseFloat(formData.price)
+      };
+
+      const success = await updateProduct(id, productData);
+
+      if (success) {
+        toast.success('Product updated successfully');
         navigate('/admin/products');
       } else {
-        setError(response.data.message || 'Failed to update product');
+        throw new Error('Failed to update product');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update product. Please try again.');
+      setError(err.message || 'Failed to update product');
+      toast.error(err.message || 'Failed to update product');
       console.error('Error updating product:', err);
     } finally {
       setSaving(false);
     }
-  };
+  }, [formData, imageFile, id, navigate, updateProduct, uploadImage, validateForm]);
 
-  if (loading) {
+  const isLoading = useMemo(() => loading && isInitialLoad, [loading, isInitialLoad]);
+
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-std"></div>
@@ -94,9 +160,18 @@ const EditProduct = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-neutral-dark">Edit Product</h1>
-        <p className="text-neutral-std mt-1">Update product information</p>
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-neutral-dark">Edit Product</h1>
+          <p className="text-neutral-std mt-1">Update product information</p>
+        </div>
+        <button
+          onClick={() => navigate('/admin/products')}
+          className="flex items-center text-neutral-std hover:text-neutral-dark"
+        >
+          <FiX className="mr-1" />
+          Cancel
+        </button>
       </div>
 
       {error && (
@@ -157,30 +232,23 @@ const EditProduct = () => {
 
           <div>
             <label className="block text-sm font-medium text-neutral-dark mb-2">
-              Stock
+              Product Image
             </label>
             <input
-              type="number"
-              name="stock"
-              value={formData.stock}
-              onChange={handleChange}
-              required
-              min="0"
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
               className="w-full px-4 py-2 border border-neutral-light rounded-lg focus:ring-2 focus:ring-primary-std focus:border-transparent"
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-neutral-dark mb-2">
-              Image URL
-            </label>
-            <input
-              type="url"
-              name="imageUrl"
-              value={formData.imageUrl}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-neutral-light rounded-lg focus:ring-2 focus:ring-primary-std focus:border-transparent"
-            />
+            {imagePreview && (
+              <div className="mt-2">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="h-32 w-32 object-cover rounded-lg"
+                />
+              </div>
+            )}
           </div>
 
           <div className="md:col-span-2">
@@ -193,6 +261,20 @@ const EditProduct = () => {
               onChange={handleChange}
               required
               rows="4"
+              className="w-full px-4 py-2 border border-neutral-light rounded-lg focus:ring-2 focus:ring-primary-std focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-neutral-dark mb-2">
+              Stock
+            </label>
+            <input
+              type="number"
+              name="stock"
+              value={formData.stock}
+              onChange={handleChange}
+              min="0"
               className="w-full px-4 py-2 border border-neutral-light rounded-lg focus:ring-2 focus:ring-primary-std focus:border-transparent"
             />
           </div>
@@ -247,9 +329,10 @@ const EditProduct = () => {
           </button>
           <button
             type="submit"
-            disabled={saving}
-            className="px-4 py-2 bg-primary-std text-white rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={saving || loading}
+            className="px-4 py-2 bg-primary-std text-white rounded-lg hover:bg-primary-dark disabled:opacity-50 flex items-center"
           >
+            <FiSave className="mr-2" />
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>

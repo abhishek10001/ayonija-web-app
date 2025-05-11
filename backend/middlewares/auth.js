@@ -57,8 +57,8 @@ import Admin from '../models/Admin.js';
 
 export const verifyAdmin = async (req, res, next) => {
     try {
-        // Get token from cookie
-        const token = req.cookies.adminToken;
+        // Get token from adminToken header
+        const token = req.headers.admintoken; // Note: headers are lowercased in Node.js
         
         if (!token) {
             return res.status(401).json({
@@ -71,7 +71,7 @@ export const verifyAdmin = async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         
         // Find admin by id
-        const admin = await Admin.findById(decoded.id);
+        const admin = await Admin.findById(decoded.id).select('-password');
         
         if (!admin) {
             return res.status(403).json({

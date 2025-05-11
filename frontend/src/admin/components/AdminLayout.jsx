@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { 
   FiPackage, 
@@ -15,21 +15,13 @@ import {
   FiBell,
   FiUser
 } from 'react-icons/fi';
-import api from '../../utils/api';
+import { AdminContext } from '../context/AdminContext';
+import axios from 'axios';
 
-const Sidebar = ({ isOpen, toggleSidebar }) => {
+const Sidebar = ({ isOpen, toggleSidebar, handleLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  const handleLogout = async () => {
-    try {
-      await api.post('/admin/signout');
-      navigate('/admin/login');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
-
   const menuItems = [
     { path: '/admin/dashboard', icon: <FiGrid size={20} />, label: 'Dashboard' },
     { path: '/admin/products', icon: <FiPackage size={20} />, label: 'Listed Products' },
@@ -171,15 +163,34 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 };
 
 const AdminLayout = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { adminToken, setAdminToken } = useContext(AdminContext);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${backendUrl}/api/admin/signout`, {}, {
+        headers: { adminToken }
+      });
+    } catch (error) {
+      // Even if the request fails, proceed to clear local state
+      console.error('Error signing out:', error);
+    } finally {
+      localStorage.removeItem('adminToken');
+      setAdminToken('');
+      navigate('/admin/login');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-neutral-50">
-      <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+      <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} handleLogout={handleLogout} />
       
       <div className={`lg:ml-72 min-h-screen transition-all duration-300 ${isSidebarOpen ? 'ml-72' : 'ml-0'}`}>
         {/* Header */}

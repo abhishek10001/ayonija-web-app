@@ -4,7 +4,9 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import adminRoutes from './routes/admin.js';
 import productRoutes from './routes/product.js';
-import jobRoutes from './routes/job.routes.js';
+import jobRoutes from './routes/jobroutes.js';
+import uploadRoutes from './routes/upload.js';
+import { handleMulterError } from './middlewares/upload.js';
 import connectDB from './config/mongodb.js';
 
 // Load environment variables first
@@ -35,10 +37,10 @@ app.use((req, res, next) => {
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: 'http://localhost:5173', // Your frontend URL
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true, // Important for cookies
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'adminToken']
 }));
 app.use(cookieParser()); // Add cookie parser for authentication
 
@@ -47,41 +49,79 @@ console.log('Registering routes...');
 
 // Routes
 app.use('/api/admin', adminRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/jobs', jobRoutes);
+app.use('/api/admin/products', productRoutes);
+app.use('/api/admin/jobs', jobRoutes);
+app.use('/api/admin/upload', uploadRoutes);
 
 // Debug route
 app.get('/api/test', (req, res) => {
-  console.log('Test route hit');
-  res.json({ message: 'API is working' });
+  res.json({ 
+    success: true,
+    message: 'API is working',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Basic route
 app.get('/', (req, res) => {
-  res.send('API WORKING');
+  res.json({
+    success: true,
+    message: 'API WORKING',
+    version: '1.0.0',
+    timestamp: new Date().toISOString()
+  });
 });
+
+// Multer error handler
+app.use(handleMulterError);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
-  res.status(500).json({
+
+  // Handle specific error types
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({
+      success: false,
+      message: 'Validation Error',
+      errors: Object.values(err.errors).map(e => e.message)
+    });
+  }
+
+  if (err.name === 'JsonWebTokenError') {
+    return res.status(401).json({
+      success: false,
+      message: 'Invalid token'
+    });
+  }
+
+  if (err.name === 'TokenExpiredError') {
+    return res.status(401).json({
+      success: false,
+      message: 'Token expired'
+    });
+  }
+
+  // Default error response
+  res.status(err.status || 500).json({
     success: false,
-    message: 'Internal server error',
-    error: err.message
+    message: err.message || 'Internal server error',
+    error: process.env.NODE_ENV === 'development' ? err : undefined
   });
 });
 
 // 404 handler
 app.use((req, res) => {
-  console.log('404 Not Found:', req.method, req.url);
   res.status(404).json({
     success: false,
-    message: 'Route not found'
+    message: `Route not found: ${req.method} ${req.url}`
   });
 });
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
+  console.log('Environment:', process.env.NODE_ENV || 'development');
+  console.log('Frontend URL:', process.env.FRONTEND_URL || 'http://localhost:5173');
   console.log('Available routes:');
   console.log('- GET /api/products');
   console.log('- GET /api/products/:id');

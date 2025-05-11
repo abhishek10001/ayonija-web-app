@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import ProtectedRoute from './components/ProtectedRoute'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import AdminContextProvider from './admin/context/AdminContext'
 
 // Main pages
 import Home from './pages/Home'
@@ -36,51 +37,53 @@ import Subscribers from './admin/pages/Subscribers'
 
 const App = () => {
   return (
-    <Router>
-      <div className="min-h-screen bg-neutral-light">
-        {/* <Navbar /> */}
-        <Routes>
-          {/* Main Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<AboutUs />} />
-          <Route path="/products" element={<AllProducts />} />
-          <Route path="/carriers" element={<Carriers />} />
-          <Route path="/contact" element={<Contact />} />
+    <AdminContextProvider>
+      <Router>
+        <div className="min-h-screen bg-neutral-light">
+          {/* <Navbar /> */}
+          <Routes>
+            {/* Main Routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/products" element={<AllProducts />} />
+            <Route path="/carriers" element={<Carriers />} />
+            <Route path="/contact" element={<Contact />} />
 
-          {/* About Sub-routes */}
-          <Route path="/about/team" element={<Team />} />
-          <Route path="/about/news" element={<News />} />
+            {/* About Sub-routes */}
+            <Route path="/about/team" element={<Team />} />
+            <Route path="/about/news" element={<News />} />
 
-          {/* Products Sub-routes */}
-          <Route path="/products/supplements" element={<Supplements />} />
+            {/* Products Sub-routes */}
+            <Route path="/products/supplements" element={<Supplements />} />
 
-          {/* Carriers Sub-routes */}
-          <Route path="/carriers/benefits" element={<Benefits />} />
-          <Route path="/carriers/culture" element={<Culture />} />
+            {/* Carriers Sub-routes */}
+            <Route path="/carriers/benefits" element={<Benefits />} />
+            <Route path="/carriers/culture" element={<Culture />} />
 
-          {/* Admin Routes */}
-          <Route path="/admin/login" element={<Login />} />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute>
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="products" element={<Products />} />
-            <Route path="products/add" element={<AddProduct />} />
-            <Route path="products/edit/:id" element={<EditProduct />} />
-            <Route path="jobs" element={<Jobs />} />
-            <Route path="jobs/add" element={<AddJob />} />
-            <Route path="applications" element={<Applications />} />
-            <Route path="subscribers" element={<Subscribers />} />
-            <Route index element={<Navigate to="dashboard" replace />} />
-          </Route>
-        </Routes>
-      </div>
-    </Router>
+            {/* Admin Routes */}
+            <Route path="/admin/login" element={<Login />} />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="products" element={<Products />} />
+              <Route path="products/add" element={<AddProduct />} />
+              <Route path="products/edit/:id" element={<EditProduct />} />
+              <Route path="jobs" element={<Jobs />} />
+              <Route path="jobs/add" element={<AddJob />} />
+              <Route path="applications" element={<Applications />} />
+              <Route path="subscribers" element={<Subscribers />} />
+              <Route index element={<Navigate to="dashboard" replace />} />
+            </Route>
+          </Routes>
+        </div>
+      </Router>
+    </AdminContextProvider>
   )
 }
 

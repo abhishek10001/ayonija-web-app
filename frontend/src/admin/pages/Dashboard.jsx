@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useContext, useCallback, useMemo } from "react";
 import {
   FiPackage,
   FiBriefcase,
@@ -7,6 +7,8 @@ import {
   FiTrendingUp,
   FiClock,
 } from "react-icons/fi";
+import { AdminContext } from "../context/AdminContext";
+import { toast } from "react-toastify";
 
 const StatCard = ({ icon, label, value, trend }) => (
   <div className="bg-white p-6 rounded-xl shadow-sm">
@@ -75,60 +77,142 @@ const RecentActivity = ({ type, title, time }) => (
 );
 
 const Dashboard = () => {
-  const stats = [
+  const { 
+    products, 
+    postedJobs, 
+    jobApplications, 
+    getAllProducts, 
+    getPostedJobs, 
+    getJobApplications,
+    loading 
+  } = useContext(AdminContext);
+
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Utility functions
+  const calculateTrend = (current, previous) => {
+    if (previous === 0) return "+0%";
+    const change = ((current - previous) / previous) * 100;
+    return `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
+  };
+
+  const formatTimeAgo = (date) => {
+    const now = new Date();
+    const past = new Date(date);
+    const diffInSeconds = Math.floor((now - past) / 1000);
+
+    if (diffInSeconds < 60) return 'just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  };
+
+  // Memoize the fetch function to prevent recreation on every render
+  const fetchDashboardData = useCallback(async () => {
+    if (!isInitialLoad) return;
+    
+    try {
+      setError(null);
+      await Promise.all([
+        getAllProducts(),
+        getPostedJobs(),
+        getJobApplications()
+      ]);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      setError('Failed to load dashboard data');
+      toast.error('Failed to load dashboard data');
+    } finally {
+      setIsInitialLoad(false);
+    }
+  }, [isInitialLoad, getAllProducts, getPostedJobs, getJobApplications]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  // Memoize stats calculation
+  const stats = useMemo(() => [
     {
       icon: <FiPackage size={24} />,
       label: "Products",
-      value: "124",
-      trend: "+12.5%",
+      value: products.length.toString(),
+      trend: calculateTrend(products.length, 0)
     },
     {
       icon: <FiBriefcase size={24} />,
       label: "Job Postings",
-      value: "15",
-      trend: "+5.2%",
+      value: postedJobs.length.toString(),
+      trend: calculateTrend(postedJobs.length, 0)
     },
     {
       icon: <FiUsers size={24} />,
       label: "Applications",
-      value: "48",
-      trend: "+18.7%",
+      value: jobApplications.length.toString(),
+      trend: calculateTrend(jobApplications.length, 0)
     },
     {
       icon: <FiMail size={24} />,
       label: "Subscribers",
       value: "2,845",
-      trend: "+8.1%",
-    },
-  ];
+      trend: "+8.1%"
+    }
+  ], [products.length, postedJobs.length, jobApplications.length]);
 
-  const recentActivities = [
-    {
-      type: "product",
-      title: 'New product "Pain Relief Gel" added',
-      time: "2 hours ago",
-    },
-    {
-      type: "job",
-      title: 'New job posting for "Clinical Pharmacist"',
-      time: "4 hours ago",
-    },
-    {
-      type: "application",
-      title: 'New application for "Sales Manager"',
-      time: "5 hours ago",
-    },
-    {
-      type: "subscriber",
-      title: "New newsletter subscriber",
-      time: "6 hours ago",
-    },
-    {
-      type: "product",
-      title: 'Product "Vitamin C" updated',
-      time: "8 hours ago",
-    },
-  ];
+  // Memoize recent activities calculation
+  const recentActivities = useMemo(() => {
+    const activities = [];
+
+    // Add recent products
+    const recentProducts = products.slice(0, 2);
+    recentProducts.forEach(product => {
+      activities.push({
+        type: "product",
+        title: `Product "${product.name}" ${product.createdAt === product.updatedAt ? 'added' : 'updated'}`,
+        time: formatTimeAgo(product.updatedAt)
+      });
+    });
+
+    // Add recent jobs
+    const recentJobs = postedJobs.slice(0, 2);
+    recentJobs.forEach(job => {
+      activities.push({
+        type: "job",
+        title: `Job posting for "${job.title}"`,
+        time: formatTimeAgo(job.createdAt)
+      });
+    });
+
+    // Add recent applications
+    const recentApplications = jobApplications.slice(0, 2);
+    recentApplications.forEach(application => {
+      activities.push({
+        type: "application",
+        title: `New application for "${application.jobId?.title || 'a job'}"`,
+        time: formatTimeAgo(application.appliedAt)
+      });
+    });
+
+    // Sort activities by time
+    return activities.sort((a, b) => new Date(b.time) - new Date(a.time));
+  }, [products, postedJobs, jobApplications]);
+
+  if (loading && isInitialLoad) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-std"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-alert-error p-4">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div>

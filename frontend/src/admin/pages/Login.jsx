@@ -1,30 +1,46 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { Shield, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../config/api';
+import { AdminContext } from '../context/AdminContext';
+import axios from 'axios';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const navigate = useNavigate();
+  const { setAdminToken } = useContext(AdminContext);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   // Check if user is already authenticated
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await api.get('/admin/verify');
+        const token = localStorage.getItem('adminToken');
+        if (!token) {
+          setCheckingAuth(false);
+          return;
+        }
+
+        const response = await axios.get(`${backendUrl}/api/admin/verify`, {
+          headers: { adminToken: token }
+        });
+        
         if (response.data.success) {
           navigate('/admin/dashboard');
+        } else {
+          localStorage.removeItem('adminToken');
+          setCheckingAuth(false);
         }
       } catch (error) {
-        // If not authenticated, stay on login page
-        console.log('Not authenticated');
+        localStorage.removeItem('adminToken');
+        setCheckingAuth(false);
       }
     };
     checkAuth();
-  }, [navigate]);
+  }, [navigate, backendUrl]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,15 +48,15 @@ export default function LoginPage() {
       setLoading(true);
       setError(null);
       
-      const response = await api.post('/admin/signin', {
+      const response = await axios.post(`${backendUrl}/api/admin/signin`, {
         email,
         password
-      }, {
-        withCredentials: true
       });
       
       if (response.data.success) {
-        // Immediately redirect to dashboard
+        const token = response.data.data.token;
+        localStorage.setItem('adminToken', token);
+        setAdminToken(token);
         navigate('/admin/dashboard');
       } else {
         setError(response.data.message || 'Authentication failed');
@@ -52,6 +68,19 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  if (checkingAuth) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-600 text-white mb-4">
+            <Shield size={28} />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-800">Checking authentication...</h2>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50">

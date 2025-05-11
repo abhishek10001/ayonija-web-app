@@ -1,16 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiSave, FiX } from 'react-icons/fi';
+import { AdminContext } from '../context/AdminContext';
+import { toast } from 'react-toastify';
 
 const AddJob = () => {
   const navigate = useNavigate();
+  const { createJob, loading } = useContext(AdminContext);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     requirements: '',
+    responsibilities: '',
     location: '',
     salary: '',
-    type: 'Full-time',
+    type: 'full-time',
+    department: '',
     deadline: '',
     isActive: true
   });
@@ -23,12 +29,69 @@ const AddJob = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const validateForm = () => {
+    if (!formData.title.trim()) {
+      setError('Job title is required');
+      return false;
+    }
+    if (!formData.department.trim()) {
+      setError('Department is required');
+      return false;
+    }
+    if (!formData.description.trim()) {
+      setError('Job description is required');
+      return false;
+    }
+    if (!formData.requirements.trim()) {
+      setError('Job requirements are required');
+      return false;
+    }
+    if (!formData.responsibilities.trim()) {
+      setError('Job responsibilities are required');
+      return false;
+    }
+    if (!formData.location.trim()) {
+      setError('Job location is required');
+      return false;
+    }
+    if (!formData.salary.trim()) {
+      setError('Salary range is required');
+      return false;
+    }
+    if (!formData.deadline) {
+      setError('Application deadline is required');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Here you would typically make an API call to save the job
-    console.log('Job data:', formData);
-    alert('Job posted successfully!');
-    navigate('/admin/jobs');
+    setError(null);
+
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      const jobData = {
+        ...formData,
+        status: formData.isActive ? 'active' : 'inactive'
+      };
+
+      const success = await createJob(jobData);
+
+      if (success) {
+        toast.success('Job posted successfully!');
+        navigate('/admin/jobs');
+      } else {
+        throw new Error('Failed to create job posting');
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to create job posting');
+      toast.error(err.message || 'Failed to create job posting');
+      console.error('Error creating job:', err);
+    }
   };
 
   return (
@@ -43,6 +106,12 @@ const AddJob = () => {
           Cancel
         </button>
       </div>
+
+      {error && (
+        <div className="mb-4 p-4 bg-alert-error/10 text-alert-error rounded-lg">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -61,6 +130,21 @@ const AddJob = () => {
             />
           </div>
 
+          {/* Department */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-std mb-2">
+              Department
+            </label>
+            <input
+              type="text"
+              name="department"
+              value={formData.department}
+              onChange={handleInputChange}
+              className="w-full px-4 py-2 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-std"
+              required
+            />
+          </div>
+
           {/* Job Type */}
           <div>
             <label className="block text-sm font-medium text-neutral-std mb-2">
@@ -72,9 +156,10 @@ const AddJob = () => {
               onChange={handleInputChange}
               className="w-full px-4 py-2 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-std"
             >
-              <option value="Full-time">Full-time</option>
-              <option value="Part-time">Part-time</option>
-              <option value="Contract">Contract</option>
+              <option value="full-time">Full-time</option>
+              <option value="part-time">Part-time</option>
+              <option value="contract">Contract</option>
+              <option value="internship">Internship</option>
             </select>
           </div>
 
@@ -172,6 +257,21 @@ const AddJob = () => {
           />
         </div>
 
+        {/* Responsibilities */}
+        <div>
+          <label className="block text-sm font-medium text-neutral-std mb-2">
+            Responsibilities
+          </label>
+          <textarea
+            name="responsibilities"
+            value={formData.responsibilities}
+            onChange={handleInputChange}
+            rows={4}
+            className="w-full px-4 py-2 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-std"
+            required
+          />
+        </div>
+
         <div className="flex justify-end space-x-4">
           <button
             type="button"
@@ -182,10 +282,11 @@ const AddJob = () => {
           </button>
           <button
             type="submit"
-            className="px-4 py-2 text-sm font-medium text-white bg-primary-std rounded-lg hover:bg-primary-dark flex items-center"
+            disabled={loading}
+            className="px-4 py-2 text-sm font-medium text-white bg-primary-std rounded-lg hover:bg-primary-dark flex items-center disabled:opacity-50"
           >
             <FiSave className="mr-2" />
-            Save Job
+            {loading ? 'Creating...' : 'Save Job'}
           </button>
         </div>
       </form>
