@@ -1,6 +1,6 @@
 import express from 'express';
 
-import { handleAdminSignIn, handleSignOut, verify } from '../controllers/adminController.js';
+import { handleAdminSignIn, handleSignOut, verify, getAllAdmins, createAdmin, deleteAdmin } from '../controllers/adminController.js';
 import { verifyAdmin } from '../middlewares/auth.js';
 
 // Public routes
@@ -11,6 +11,11 @@ adminRouter.get('/verify', verify);
 
 // Protected routes (require admin authentication)
 adminRouter.use(verifyAdmin);
+
+// Admin management routes
+adminRouter.get('/admins', getAllAdmins);
+adminRouter.post('/admins', createAdmin);
+adminRouter.delete('/admins/:id', deleteAdmin);
 
 // Add protected admin routes here
 // Example:

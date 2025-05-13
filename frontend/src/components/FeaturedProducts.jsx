@@ -115,7 +115,7 @@ const FeaturedProducts = () => {
                 <div className="mt-4">
                   <Link
                     to={`/products/${product.name.toLowerCase().replace(/\s+/g, '-')}`}
-                    className="flex items-center justify-center w-full px-3 py-1.5 bg-primary-std text-white rounded-md hover:bg-primary-dark transition-colors duration-300 text-sm font-medium"
+                    className="inline-flex items-center justify-center px-4 py-2 bg-primary-std text-white rounded-md hover:bg-primary-dark transition-all duration-300 text-sm font-medium shadow-sm hover:shadow-md"
                   >
                     <FiInfo size={14} className="mr-1.5" />
                     <span>View Details</span>

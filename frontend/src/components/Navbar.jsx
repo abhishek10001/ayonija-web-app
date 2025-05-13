@@ -150,11 +150,8 @@ const Navbar = () => {
           </div>
 
           {/* Icons */}
-          <div className="hidden md:flex items-center space-x-4 border-2 border-green-600/90 rounded-xl">
-            <Link to="/admin/login" className="flex items-center text-gray-700 hover:text-white hover:bg-primary-dark/90 px-3 py-2 rounded-lg transition-all duration-300">
-              <FiUser className="h-6 w-6 text-primary-dark hover:text-white" />
-              <span className="ml-2 font-medium">Admin Login</span>
-            </Link>
+          <div className="hidden md:flex items-center space-x-4">
+            {/* Admin login removed */}
           </div>
 
           {/* Mobile menu button */}
@@ -229,8 +226,7 @@ const Navbar = () => {
             
             <div className="border-t border-gray-200 pt-4 mt-4">
               <div className="flex justify-between px-3">
-               
-                <button className="flex items-center text-gray-700 hover:text-white hover:bg-green-600 px-3 py-2 rounded-md transition-all duration-300" onClick={()=>handleloginClick()}><FiUser className="h-6 w-6" />Admin Login</button>
+                {/* Admin login removed */}
               </div>
             </div>
           </div>

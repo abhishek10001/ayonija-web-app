@@ -22,30 +22,30 @@ const UserContextProvider = (props) => {
     });
 
     // Add request interceptor to add auth token
-    api.interceptors.request.use(
-        (config) => {
-            if (userToken) {
-                config.headers.userToken = userToken;
-            }
-            return config;
-        },
-        (error) => {
-            return Promise.reject(error);
-        }
-    );
+    // api.interceptors.request.use(
+    //     (config) => {
+    //         if (userToken) {
+    //             config.headers.userToken = userToken;
+    //         }
+    //         return config;
+    //     },
+    //     (error) => {
+    //         return Promise.reject(error);
+    //     }
+    // );
 
-    // Add response interceptor to handle common errors
-    api.interceptors.response.use(
-        (response) => response,
-        (error) => {
-            if (error.response?.status === 401) {
-                setUserToken('');
-                localStorage.removeItem('userToken');
-                window.location.href = '/login';
-            }
-            return Promise.reject(error);
-        }
-    );
+    // // Add response interceptor to handle common errors
+    // api.interceptors.response.use(
+    //     (response) => response,
+    //     (error) => {
+    //         if (error.response?.status === 401) {
+    //             setUserToken('');
+    //             localStorage.removeItem('userToken');
+    //             window.location.href = '/login';
+    //         }
+    //         return Promise.reject(error);
+    //     }
+    // );
 
     // Job Application API calls
     const applyForJob = async (jobId, applicationData) => {
@@ -148,6 +148,9 @@ const UserContextProvider = (props) => {
         } finally {
             setLoading(false);
         }
+    };
+    const getJobs = async () => {
+        
     };
 
     const value = {

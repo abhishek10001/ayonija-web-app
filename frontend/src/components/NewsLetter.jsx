@@ -1,30 +1,23 @@
 import React, { useState } from 'react';
 import { FiCheck } from 'react-icons/fi';
+import { Mail } from 'lucide-react';
 
 const Newsletter = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: ''
-  });
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState({ type: '', message: '' });
 
   const benefits = [
-    "New product announcements",
-    "Seasonal health advisories",
-    "Special discount offers",
-    "Health management resources"
+    "Latest research insights",
+    "Industry news updates",
+    "Exclusive offers",
+    "Company announcements"
   ];
 
   const handleSubmit = (e) => {
     e.preventDefault();
     // Handle form submission here
-    console.log('Form submitted:', formData);
-  };
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setStatus({ type: 'success', message: 'Thank you for subscribing!' });
+    setEmail('');
   };
 
   return (
@@ -36,13 +29,13 @@ const Newsletter = () => {
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-neutral-dark mb-4">
                 Stay Informed About<br />
-                Health & Wellness
+                Research & Innovation
               </h2>
               <p className="text-neutral-std mb-8">
-                Subscribe to our newsletter and receive the latest updates on our products, 
-                health tips, exclusive offers, and educational resources.
+                Subscribe to our newsletter and receive the latest updates on our research, 
+                industry insights, exclusive offers, and company news.
               </p>
-
+              
               <div className="space-y-3">
                 {benefits.map((benefit, index) => (
                   <div key={index} className="flex items-center">
@@ -58,39 +51,38 @@ const Newsletter = () => {
             {/* Right Column - Form */}
             <div>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    placeholder="Your name"
-                    className="w-full px-4 py-3 rounded-lg border border-neutral-light focus:outline-none focus:ring-2 focus:ring-primary-std/20 focus:border-primary-std transition-all"
-                    required
-                  />
-                </div>
-                <div>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                    <Mail className="h-5 w-5 text-neutral-std" />
+                  </div>
                   <input
                     type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="Your email address"
-                    className="w-full px-4 py-3 rounded-lg border border-neutral-light focus:outline-none focus:ring-2 focus:ring-primary-std/20 focus:border-primary-std transition-all"
+                    className="w-full pl-12 pr-4 py-3 rounded-lg border border-neutral-light focus:outline-none focus:ring-2 focus:ring-primary-std/20 focus:border-primary-std transition-all"
                     required
                   />
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-primary-std text-white py-3 rounded-lg hover:bg-primary-dark transition-colors duration-300 font-medium"
+                  className="px-4 py-3 bg-primary-std text-white py-3 rounded-lg hover:bg-primary-dark transition-colors duration-300 font-medium"
                 >
                   Subscribe Now
                 </button>
                 <p className="text-xs text-neutral-std mt-4">
-                  By subscribing, you agree to our Privacy Policy and consent to receive updates from PharmaHealth. 
+                  By subscribing, you agree to our Privacy Policy and consent to receive updates from AYONIJA RESEARCH SOLUTIONS. 
                   You can unsubscribe at any time.
                 </p>
               </form>
+              
+              {status.message && (
+                <div className={`mt-4 p-4 rounded-lg ${
+                  status.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                }`}>
+                  {status.message}
+                </div>
+              )}
             </div>
           </div>
         </div>

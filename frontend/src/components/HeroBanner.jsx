@@ -24,16 +24,7 @@ const HeroBanner = () => {
               Trusted by healthcare professionals worldwide. Discover our extensive 
               range of pharmaceutical products designed to improve patient outcomes.
             </p>
-            
-            <div className="flex flex-wrap gap-4 mb-6 sm:mb-8">
-              <button className="flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-white text-primary-dark rounded-lg hover:bg-gray-100 transition-all duration-300 text-sm sm:text-base">
-                Shop Now
-                <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-              </button>
-              <button className="flex items-center px-4 sm:px-6 py-2 sm:py-3 border border-white/20 text-white rounded-lg hover:bg-white/10 transition-all duration-300 text-sm sm:text-base">
-                Learn More
-              </button>
-            </div>
+          
             
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mt-8 sm:mt-10 border-t border-white/10 pt-8">
               {[

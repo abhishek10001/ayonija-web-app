@@ -234,3 +234,100 @@ export const verify = async (req, res) => {
     });
   }
 };
+
+// Get all admins
+export const getAllAdmins = async (req, res) => {
+  try {
+    const admins = await Admin.find().select('-password');
+    res.status(200).json({
+      success: true,
+      data: admins
+    });
+  } catch (error) {
+    console.error('Error getting admins:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching admins',
+      error: error.message
+    });
+  }
+};
+
+// Create new admin
+export const createAdmin = async (req, res) => {
+  try {
+    const { email, password, name, role } = req.body;
+
+    // Check if admin already exists
+    const existingAdmin = await Admin.findOne({ email: email.toLowerCase() });
+    if (existingAdmin) {
+      return res.status(400).json({
+        success: false,
+        message: 'Admin with this email already exists'
+      });
+    }
+
+    // Create new admin
+    const admin = new Admin({
+      email: email.toLowerCase(),
+      password,
+      name,
+      role: role || 'admin'
+    });
+
+    await admin.save();
+
+    // Return admin without password
+    const adminWithoutPassword = admin.toObject();
+    delete adminWithoutPassword.password;
+
+    res.status(201).json({
+      success: true,
+      message: 'Admin created successfully',
+      data: adminWithoutPassword
+    });
+  } catch (error) {
+    console.error('Error creating admin:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating admin',
+      error: error.message
+    });
+  }
+};
+
+// Delete admin
+export const deleteAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Prevent deleting self
+    if (id === req.admin.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete your own account'
+      });
+    }
+
+    const admin = await Admin.findByIdAndDelete(id);
+    
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: 'Admin not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Admin deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting admin:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting admin',
+      error: error.message
+    });
+  }
+};

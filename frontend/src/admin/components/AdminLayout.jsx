@@ -13,10 +13,13 @@ import {
   FiSettings,
   FiSearch,
   FiBell,
-  FiUser
+  FiUser,
+  FiTrash2,
+  FiPlus
 } from 'react-icons/fi';
 import { AdminContext } from '../context/AdminContext';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const Sidebar = ({ isOpen, toggleSidebar, handleLogout }) => {
   const location = useLocation();
@@ -164,10 +167,24 @@ const Sidebar = ({ isOpen, toggleSidebar, handleLogout }) => {
 
 const AdminLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
+  const [newAdmin, setNewAdmin] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'admin'
+  });
   const location = useLocation();
   const navigate = useNavigate();
-  const { adminToken, setAdminToken } = useContext(AdminContext);
+  const { adminToken, setAdminToken, admins, getAllAdmins, createAdmin, deleteAdmin } = useContext(AdminContext);
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+  useEffect(() => {
+    if (isSettingsOpen) {
+      getAllAdmins();
+    }
+  }, [isSettingsOpen]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -179,12 +196,31 @@ const AdminLayout = () => {
         headers: { adminToken }
       });
     } catch (error) {
-      // Even if the request fails, proceed to clear local state
       console.error('Error signing out:', error);
     } finally {
       localStorage.removeItem('adminToken');
       setAdminToken('');
       navigate('/admin/login');
+    }
+  };
+
+  const handleAddAdmin = async (e) => {
+    e.preventDefault();
+    const success = await createAdmin(newAdmin);
+    if (success) {
+      setIsAddAdminOpen(false);
+      setNewAdmin({
+        name: '',
+        email: '',
+        password: '',
+        role: 'admin'
+      });
+    }
+  };
+
+  const handleDeleteAdmin = async (id) => {
+    if (window.confirm('Are you sure you want to delete this admin?')) {
+      await deleteAdmin(id);
     }
   };
 
@@ -211,9 +247,12 @@ const AdminLayout = () => {
               </button>
               <div className="h-8 w-px bg-neutral-light"></div>
               <div className="flex items-center">
-                <div className="w-8 h-8 rounded-full bg-primary-std text-white flex items-center justify-center">
+                <button
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="w-8 h-8 rounded-full bg-primary-std text-white flex items-center justify-center hover:bg-primary-dark transition-colors"
+                >
                   <span className="text-sm font-medium">A</span>
-                </div>
+                </button>
               </div>
             </div>
           </div>
@@ -228,6 +267,126 @@ const AdminLayout = () => {
         <footer className="bg-white border-t border-neutral-light p-6 text-center text-sm text-neutral-std">
           <p>© 2025 Your Company. All rights reserved.</p>
         </footer>
+
+        {/* Settings Modal */}
+        {isSettingsOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold">Admin Settings</h2>
+                <button
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="text-neutral-std hover:text-neutral-dark"
+                >
+                  <FiX size={24} />
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <button
+                  onClick={() => setIsAddAdminOpen(true)}
+                  className="flex items-center px-4 py-2 bg-primary-std text-white rounded-lg hover:bg-primary-dark transition-colors"
+                >
+                  <FiPlus className="mr-2" />
+                  Add New Admin
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {admins.map((admin) => (
+                  <div key={admin._id} className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg">
+                    <div>
+                      <h3 className="font-medium">{admin.name}</h3>
+                      <p className="text-sm text-neutral-std">{admin.email}</p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteAdmin(admin._id)}
+                      className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <FiTrash2 size={20} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Add Admin Modal */}
+        {isAddAdminOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold">Add New Admin</h2>
+                <button
+                  onClick={() => setIsAddAdminOpen(false)}
+                  className="text-neutral-std hover:text-neutral-dark"
+                >
+                  <FiX size={24} />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddAdmin} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-std mb-1">Name</label>
+                  <input
+                    type="text"
+                    value={newAdmin.name}
+                    onChange={(e) => setNewAdmin({ ...newAdmin, name: e.target.value })}
+                    className="w-full px-4 py-2 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-std"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-std mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={newAdmin.email}
+                    onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
+                    className="w-full px-4 py-2 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-std"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-std mb-1">Password</label>
+                  <input
+                    type="password"
+                    value={newAdmin.password}
+                    onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
+                    className="w-full px-4 py-2 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-std"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-std mb-1">Role</label>
+                  <select
+                    value={newAdmin.role}
+                    onChange={(e) => setNewAdmin({ ...newAdmin, role: e.target.value })}
+                    className="w-full px-4 py-2 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-std"
+                  >
+                    <option value="admin">Admin</option>
+                    <option value="superadmin">Super Admin</option>
+                  </select>
+                </div>
+                <div className="flex justify-end space-x-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddAdminOpen(false)}
+                    className="px-4 py-2 text-neutral-std hover:text-neutral-dark"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-primary-std text-white rounded-lg hover:bg-primary-dark transition-colors"
+                  >
+                    Add Admin
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

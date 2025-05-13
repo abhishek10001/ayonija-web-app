@@ -7,8 +7,9 @@ const Carriers = () => {
   return (
     <div>
       <Navbar />
-      <JobsOpening />
       <Benefits />
+      <JobsOpening />
+      
       <Footer />
     </div>
   );

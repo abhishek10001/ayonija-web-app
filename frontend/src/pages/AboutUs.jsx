@@ -34,13 +34,13 @@ const AboutUs = () => {
             <div className="md:w-2/3 mb-12 md:mb-0">
               <div className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-6 text-sm font-medium">
                 <span className="w-2 h-2 bg-white rounded-full mr-2"></span>
-                Trusted by healthcare professionals worldwide
+                Emerging Research Solutions Provider
               </div>
-              <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">About <span className="text-white/90">PharmaHealth</span></h1>
+              <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">About <span className="text-white/90">AYONIJA RESEARCH SOLUTIONS</span></h1>
               <p className="text-xl text-white/90 leading-relaxed max-w-2xl mb-8">
-                We're dedicated to improving global healthcare through innovation, quality, and accessibility. 
-                For over two decades, PharmaHealth has been delivering trusted pharmaceutical products to healthcare 
-                professionals and patients worldwide.
+                We're a dynamic research solutions company dedicated to delivering innovative and high-quality research services. 
+                As a newly established organization, we bring fresh perspectives and modern approaches to research and analysis, 
+                committed to excellence and client satisfaction.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link to="/contact" className="inline-flex items-center px-6 py-3 bg-white text-primary-dark font-medium rounded-lg hover:bg-opacity-90 transition-all shadow-lg hover:shadow-xl">
@@ -188,18 +188,18 @@ const AboutUs = () => {
         </div>
       </section>
 
-      {/* Company History */}
+      {/* Company History - Replaced with Future Vision */}
       <section className="py-20 bg-neutral-light">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 mb-4">
               <div className="h-px w-8 bg-primary-std"></div>
-              <span className="text-primary-std font-medium uppercase tracking-wider text-sm">Our History</span>
+              <span className="text-primary-std font-medium uppercase tracking-wider text-sm">Our Vision</span>
               <div className="h-px w-8 bg-primary-std"></div>
             </div>
-            <h2 className="text-4xl font-bold mb-6 text-neutral-dark">Our Journey</h2>
+            <h2 className="text-4xl font-bold mb-6 text-neutral-dark">Our Roadmap</h2>
             <p className="text-neutral-std max-w-2xl mx-auto text-lg">
-              From humble beginnings to industry leadership, explore the key milestones that have shaped our company over two decades.
+              As a forward-thinking research solutions provider, we're committed to building a strong foundation for future growth and innovation.
             </p>
           </div>
           
@@ -210,33 +210,33 @@ const AboutUs = () => {
             <div className="space-y-20 relative">
               {[
                 {
-                  year: '2003',
+                  year: '2024',
                   title: 'Foundation',
-                  description: 'PharmaHealth was founded with a vision to provide affordable healthcare solutions.',
+                  description: 'Establishing AYONIJA RESEARCH SOLUTIONS with a vision to provide innovative research solutions.',
                   side: 'left'
                 },
                 {
-                  year: '2008',
-                  title: 'Research Expansion',
-                  description: 'Established our first state-of-the-art research facility focused on innovative therapeutic areas.',
+                  year: '2024',
+                  title: 'Service Launch',
+                  description: 'Introducing our comprehensive suite of research and analysis services to the market.',
                   side: 'right'
                 },
                 {
-                  year: '2013',
-                  title: 'Global Reach',
-                  description: 'Expanded operations to 15 countries, establishing a global presence in key healthcare markets.',
+                  year: '2024',
+                  title: 'Technology Integration',
+                  description: 'Implementing cutting-edge research tools and methodologies to enhance service delivery.',
                   side: 'left'
                 },
                 {
-                  year: '2018',
-                  title: 'Innovation Leadership',
-                  description: 'Received multiple awards for our breakthrough developments in chronic disease management.',
+                  year: '2025',
+                  title: 'Expansion Plans',
+                  description: 'Strategic plans to expand our service portfolio and reach new markets.',
                   side: 'right'
                 },
                 {
-                  year: '2023',
-                  title: 'Sustainable Future',
-                  description: 'Launched our sustainability initiative to ensure environmentally responsible practices across all operations.',
+                  year: '2025',
+                  title: 'Innovation Hub',
+                  description: 'Establishing our research innovation center to drive future developments.',
                   side: 'left'
                 }
               ].map((milestone, index) => (
@@ -277,28 +277,28 @@ const AboutUs = () => {
             </div>
             <h2 className="text-4xl font-bold mb-6 text-neutral-dark">Our Leadership Team</h2>
             <p className="text-neutral-std max-w-2xl mx-auto text-lg">
-              Meet the experienced professionals who guide our organization with vision, expertise, and a commitment to excellence.
+              Meet the dedicated professionals who are building the foundation of our organization with expertise and vision.
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {[
               {
-                name: 'Dr. Sarah Johnson',
-                position: 'Chief Executive Officer',
-                bio: 'With over 25 years in pharmaceutical leadership, Dr. Johnson brings strategic vision and industry expertise.',
+                name: 'Dr. Amit Kumar',
+                position: 'Founder & CEO',
+                bio: 'Bringing extensive experience in research and analysis, leading our organization with innovative vision.',
                 social: {twitter: '#', linkedin: '#'}
               },
               {
-                name: 'Dr. Michael Chen',
-                position: 'Chief Research Officer',
-                bio: 'Leading our research initiatives with a focus on innovative therapeutic solutions and clinical excellence.',
+                name: 'Dr. Priya Sharma',
+                position: 'Head of Research',
+                bio: 'Leading our research initiatives with a focus on innovative methodologies and analytical excellence.',
                 social: {twitter: '#', linkedin: '#'}
               },
               {
-                name: 'Rebecca Williams',
-                position: 'Chief Operations Officer',
-                bio: 'Ensures operational efficiency and excellence across our global manufacturing and distribution network.',
+                name: 'Rajesh Patel',
+                position: 'Operations Director',
+                bio: 'Ensuring operational excellence and efficient service delivery across our research operations.',
                 social: {twitter: '#', linkedin: '#'}
               }
             ].map((member, index) => (
@@ -346,10 +346,10 @@ const AboutUs = () => {
         </div>
         
         <div className="container mx-auto px-4 text-center relative z-10">
-          <h2 className="text-4xl font-bold mb-6">Ready to Partner with PharmaHealth?</h2>
+          <h2 className="text-4xl font-bold mb-6">Ready to Partner with AYONIJA RESEARCH SOLUTIONS?</h2>
           <p className="max-w-2xl mx-auto mb-10 text-white/90 text-lg">
-            Whether you're a healthcare provider, pharmacy, or potential collaborator, we're here to support your needs
-            with our pharmaceutical expertise and quality products.
+            Whether you're looking for research services, data analysis, or consulting solutions, we're here to support your needs
+            with our expertise and innovative approaches.
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-12">
@@ -359,7 +359,7 @@ const AboutUs = () => {
               </div>
               <h3 className="text-xl font-bold mb-2">Email Us</h3>
               <p className="text-white/80 mb-4">Send us your inquiries</p>
-              <a href="mailto:contact@pharmahealth.com" className="text-white font-medium hover:underline">contact@pharmahealth.com</a>
+              <a href="mailto:contact@ayonijars.com" className="text-white font-medium hover:underline">contact@ayonijars.com</a>
             </div>
             
             <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl hover:bg-white/15 transition-all">
@@ -367,8 +367,8 @@ const AboutUs = () => {
                 <Phone className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold mb-2">Call Us</h3>
-              <p className="text-white/80 mb-4">Mon-Fri, 9am-5pm EST</p>
-              <a href="tel:+18005551234" className="text-white font-medium hover:underline">+1 (800) 555-1234</a>
+              <p className="text-white/80 mb-4">Mon-Fri, 9am-5pm IST</p>
+              <a href="tel:+911234567890" className="text-white font-medium hover:underline">+91 1234567890</a>
             </div>
             
             <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl hover:bg-white/15 transition-all">
@@ -377,7 +377,7 @@ const AboutUs = () => {
               </div>
               <h3 className="text-xl font-bold mb-2">Visit Us</h3>
               <p className="text-white/80 mb-4">Our headquarters</p>
-              <address className="text-white font-medium not-italic">123 Pharma Way, Health City</address>
+              <address className="text-white font-medium not-italic">8-3-169/2K, Plot No-2, Siddhartha Nagar, Sanjeev Reddy Nagar, Ameerpet, Hyderabad- 500038, Telangana</address>
             </div>
           </div>
           
@@ -386,8 +386,8 @@ const AboutUs = () => {
               Contact Us
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
-            <Link to="/products" className="inline-flex items-center px-8 py-4 bg-transparent border border-white/30 backdrop-blur-sm text-white font-medium rounded-lg hover:bg-white/10 transition-all">
-              Explore Products
+            <Link to="/services" className="inline-flex items-center px-8 py-4 bg-transparent border border-white/30 backdrop-blur-sm text-white font-medium rounded-lg hover:bg-white/10 transition-all">
+              Explore Services
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </div>

@@ -14,6 +14,7 @@ const AdminContextProvider = (props) => {
     const [jobApplications, setJobApplications] = useState([]);
     const [totalApplications, setTotalApplications] = useState(0);
     const [postedJobs, setPostedJobs] = useState([]);
+    const [admins, setAdmins] = useState([]);
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -426,6 +427,87 @@ const AdminContextProvider = (props) => {
         }
     };
 
+    // Admin management functions
+    const getAllAdmins = async () => {
+        try {
+            setLoading(true);
+            if (!adminToken) {
+                toast.error('Please login first');
+                return [];
+            }
+
+            const response = await api.get('/api/admin/admins');
+            
+            if (response.data.success) {
+                setAdmins(response.data.data);
+                return response.data.data;
+            } else {
+                toast.error(response.data.message || 'Failed to load admins');
+                return [];
+            }
+        } catch (error) {
+            console.error('Error in getAllAdmins:', error);
+            toast.error(error.response?.data?.message || 'Failed to fetch admins');
+            return [];
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const createAdmin = async (adminData) => {
+        try {
+            setLoading(true);
+            if (!adminToken) {
+                toast.error('Please login first');
+                return false;
+            }
+
+            const response = await api.post('/api/admin/admins', adminData);
+            
+            if (response.data.success) {
+                toast.success('Admin created successfully');
+                await getAllAdmins(); // Refresh the admins list
+                return true;
+            } else {
+                toast.error(response.data.message || 'Failed to create admin');
+                return false;
+            }
+        } catch (error) {
+            console.error('Error creating admin:', error);
+            toast.error(error.response?.data?.message || 'Failed to create admin');
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const deleteAdmin = async (id) => {
+        try {
+            setLoading(true);
+            if (!adminToken) {
+                toast.error('Please login first');
+                return false;
+            }
+
+            const response = await api.delete(`/api/admin/admins/${id}`);
+            
+            if (response.data.success) {
+                toast.success('Admin deleted successfully');
+                await getAllAdmins(); // Refresh the admins list
+                return true;
+            } else {
+                toast.error(response.data.message || 'Failed to delete admin');
+                return false;
+            }
+        } catch (error) {
+            console.error('Error deleting admin:', error);
+            toast.error(error.response?.data?.message || 'Failed to delete admin');
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const value = {
         adminToken,
         setAdminToken,
@@ -436,6 +518,7 @@ const AdminContextProvider = (props) => {
         jobApplications,
         totalApplications,
         postedJobs,
+        admins,
         // Product API calls
         getAllProducts,
         getProduct,
@@ -453,6 +536,10 @@ const AdminContextProvider = (props) => {
         createJob,
         updateJob,
         deleteJob,
+        // Admin management functions
+        getAllAdmins,
+        createAdmin,
+        deleteAdmin,
     };
 
     return (

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Phone, Mail, MapPin, Clock, Send, CheckCircle, AlertCircle, MessageSquare, User, AtSign, ChevronRight, Globe } from 'lucide-react';
 import Navbar from '../components/Navbar';
@@ -92,7 +91,7 @@ const Contact = () => {
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <span className="px-4 py-1 bg-white/20 text-white text-sm rounded-full inline-block mb-6">REACH OUT TO US</span>
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">Get in Touch With Our Team</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">AYONIJA RESEARCH SOLUTIONS PRIVATE LIMITED</h1>
             <p className="text-white/90 max-w-2xl mx-auto text-lg">
               Have questions about our products or services? Our knowledgeable team is ready
               to assist you with any inquiries and provide the support you need.
@@ -115,21 +114,22 @@ const Contact = () => {
             <div className="bg-primary-std/10 p-2 rounded-full group-hover:bg-primary-std transition-colors">
               <Phone className="h-4 w-4 text-primary-std group-hover:text-white" />
             </div>
-            <span className="font-medium text-neutral-dark">(555) 123-4567</span>
+            <span className="font-medium text-neutral-dark">+91 1234567890</span>
           </a>
           
-          <a href="mailto:info@pharmahealth.com" className="flex items-center gap-2 bg-white py-2 px-4 rounded-full shadow-md hover:shadow-lg transition-all group">
+          <a href="mailto:contact@ayonijars.com" className="flex items-center gap-2 bg-white py-2 px-4 rounded-full shadow-md hover:shadow-lg transition-all group">
             <div className="bg-primary-std/10 p-2 rounded-full group-hover:bg-primary-std transition-colors">
               <Mail className="h-4 w-4 text-primary-std group-hover:text-white" />
             </div>
-            <span className="font-medium text-neutral-dark">info@pharmahealth.com</span>
+            <span className="font-medium text-neutral-dark">contact@ayonijars.com</span>
           </a>
           
           <div className="flex items-center gap-2 bg-white py-2 px-4 rounded-full shadow-md hover:shadow-lg transition-all group">
             <div className="bg-primary-std/10 p-2 rounded-full group-hover:bg-primary-std transition-colors">
               <MapPin className="h-4 w-4 text-primary-std group-hover:text-white" />
             </div>
-            <span className="font-medium text-neutral-dark">123 Pharma Street, Health City</span>
+            <span className="font-medium text-neutral-dark">8-3-169/2K, Plot No-2, Siddhartha Nagar, Sanjeev Reddy Nagar, Ameerpet,  
+            Hyderabad- 500038, Telangana </span>
           </div>
         </div>
 
@@ -204,11 +204,11 @@ const Contact = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold text-neutral-dark mb-1">Email Inquiries</h3>
-                      <a href="mailto:info@pharmahealth.com" className="text-neutral-std hover:text-primary-std block transition-colors text-sm">
-                        General: info@pharmahealth.com
+                      <a href="mailto:contact@ayonijars.com" className="text-neutral-std hover:text-primary-std block transition-colors text-sm">
+                        General: contact@ayonijars.com
                       </a>
-                      <a href="mailto:support@pharmahealth.com" className="text-neutral-std hover:text-primary-std block transition-colors text-sm">
-                        Support: support@pharmahealth.com
+                      <a href="mailto:contact@ayonijars.com" className="text-neutral-std hover:text-primary-std block transition-colors text-sm">
+                        Support: contact@ayonijars.com
                       </a>
                     </div>
                   </div>
@@ -221,9 +221,9 @@ const Contact = () => {
                     <div>
                       <h3 className="font-semibold text-neutral-dark mb-1">Visit Our Office</h3>
                       <address className="text-neutral-std not-italic text-sm">
-                        123 Pharma Street<br />
-                        Health City, HC 12345<br />
-                        United States
+                        8-3-169/2K, Plot No-2, Siddhartha Nagar,<br />
+                        Sanjeev Reddy Nagar, Ameerpet,<br />
+                        Hyderabad- 500038, Telangana
                       </address>
                     </div>
                   </div>
@@ -425,21 +425,82 @@ const Contact = () => {
         )}
 
         {/* Map Section */}
-        <div className="mt-8 rounded-2xl overflow-hidden h-[400px] bg-white shadow-md transform hover:translate-y-1 transition-transform duration-300">
-          <div className="w-full h-full bg-neutral-100 relative">
-            {/* Replace this div with your map component */}
-            <div className="w-full h-full flex items-center justify-center text-neutral-std">
-              <div className="text-center">
-                <MapPin className="h-8 w-8 mx-auto mb-3 text-primary-std animate-bounce" />
-                <p className="text-lg font-medium text-neutral-dark">Our Location</p>
-                <p className="text-sm">123 Pharma Street, Health City, HC 12345</p>
-                <button className="mt-4 px-4 py-2 bg-primary-std text-white rounded-lg text-sm hover:bg-primary-dark transition-all">
-                  Get Directions
-                </button>
+        <section className="py-20 bg-neutral-light">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 mb-4">
+                <div className="h-px w-8 bg-primary-std"></div>
+                <span className="text-primary-std font-medium uppercase tracking-wider text-sm">Visit Us</span>
+                <div className="h-px w-8 bg-primary-std"></div>
+              </div>
+              <h2 className="text-4xl font-bold mb-6 text-neutral-dark">Our Location</h2>
+              <p className="text-neutral-std max-w-2xl mx-auto text-lg">
+                Find us at our headquarters in Hyderabad, where our team is ready to assist you with your research needs.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <iframe 
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d30452.1995!2d78.4455!3d17.4375!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bcb90c2c0b0a0a1%3A0x8c0c8c0c8c0c8c0c!2sAmeerpet%2C%20Hyderabad%2C%20Telangana%20500038!5e0!3m2!1sen!2sin!4v1620000000000!5m2!1sen!2sin"
+                  width="100%" 
+                  height="400" 
+                  style={{ border: 0 }} 
+                  allowFullScreen="" 
+                  loading="lazy" 
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="AYONIJA RESEARCH SOLUTIONS Location"
+                  className="w-full h-[600px]"
+                ></iframe>
+              </div>
+              
+              <div className="space-y-8">
+                <div className="bg-white p-8 rounded-2xl shadow-lg">
+                  <h3 className="text-2xl font-bold mb-6 text-neutral-dark">Office Address</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-start">
+                      <MapPin className="w-6 h-6 text-primary-std mt-1 flex-shrink-0" />
+                      <div className="ml-4">
+                        <p className="text-neutral-dark font-medium">AYONIJA RESEARCH SOLUTIONS PRIVATE LIMITED</p>
+                        <p className="text-neutral-std mt-1">8-3-169/2K, Plot No-2, Siddhartha Nagar,</p>
+                        <p className="text-neutral-std">Sanjeev Reddy Nagar, Ameerpet,</p>
+                        <p className="text-neutral-std">Hyderabad - 500038, Telangana</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <Phone className="w-6 h-6 text-primary-std" />
+                      <a href="tel:+911234567890" className="ml-4 text-neutral-std hover:text-primary-std">+91 1234567890</a>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <Mail className="w-6 h-6 text-primary-std" />
+                      <a href="mailto:contact@ayonijars.com" className="ml-4 text-neutral-std hover:text-primary-std">contact@ayonijars.com</a>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-white p-8 rounded-2xl shadow-lg">
+                  <h3 className="text-2xl font-bold mb-6 text-neutral-dark">Business Hours</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-neutral-std">Monday - Friday</span>
+                      <span className="text-neutral-dark font-medium">9:00 AM - 5:00 PM IST</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-neutral-std">Saturday</span>
+                      <span className="text-neutral-dark font-medium">10:00 AM - 2:00 PM IST</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-neutral-std">Sunday</span>
+                      <span className="text-neutral-dark font-medium">Closed</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </section>
         
         {/* "Back to top" button that appears when scrolled */}
         {scrolled && (
