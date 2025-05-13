@@ -5,6 +5,7 @@ import { Mail } from 'lucide-react';
 const Newsletter = () => {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState({ type: '', message: '' });
+  const [loading, setLoading] = useState(false);
 
   const benefits = [
     "Latest research insights",
@@ -13,11 +14,28 @@ const Newsletter = () => {
     "Company announcements"
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission here
-    setStatus({ type: 'success', message: 'Thank you for subscribing!' });
-    setEmail('');
+    setStatus({ type: '', message: '' });
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/user/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setStatus({ type: 'success', message: 'Thank you for subscribing!' });
+        setEmail('');
+      } else {
+        setStatus({ type: 'error', message: data.message || 'Subscription failed. Please try again.' });
+      }
+    } catch (error) {
+      setStatus({ type: 'error', message: 'An error occurred. Please try again.' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -62,13 +80,15 @@ const Newsletter = () => {
                     placeholder="Your email address"
                     className="w-full pl-12 pr-4 py-3 rounded-lg border border-neutral-light focus:outline-none focus:ring-2 focus:ring-primary-std/20 focus:border-primary-std transition-all"
                     required
+                    disabled={loading}
                   />
                 </div>
                 <button
                   type="submit"
                   className="px-4 py-3 bg-primary-std text-white py-3 rounded-lg hover:bg-primary-dark transition-colors duration-300 font-medium"
+                  disabled={loading}
                 >
-                  Subscribe Now
+                  {loading ? 'Subscribing...' : 'Subscribe Now'}
                 </button>
                 <p className="text-xs text-neutral-std mt-4">
                   By subscribing, you agree to our Privacy Policy and consent to receive updates from AYONIJA RESEARCH SOLUTIONS. 

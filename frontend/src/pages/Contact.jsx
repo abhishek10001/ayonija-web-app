@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Phone, Mail, MapPin, Clock, Send, CheckCircle, AlertCircle, MessageSquare, User, AtSign, ChevronRight, Globe } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { UserContext } from '../context/UserContext';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +15,8 @@ const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('message'); // 'message' or 'faq'
   const [scrolled, setScrolled] = useState(false);
+
+  const { sendContactMessage } = useContext(UserContext);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,21 +36,24 @@ const Contact = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate API call
-    setTimeout(() => {
+    const success = await sendContactMessage(formData);
+    if (success) {
       setFormStatus({
         type: 'success',
         message: 'Thank you for your message! We will get back to you soon.'
       });
-      setIsSubmitting(false);
       setFormData({ name: '', email: '', subject: '', message: '' });
-      
-      // Auto-clear success message after 5 seconds
-      setTimeout(() => {
-        setFormStatus({ type: '', message: '' });
-      }, 5000);
-    }, 2000);
+    } else {
+      setFormStatus({
+        type: 'error',
+        message: 'Failed to send message. Please try again later.'
+      });
+    }
+    setIsSubmitting(false);
+    // Auto-clear success message after 5 seconds
+    setTimeout(() => {
+      setFormStatus({ type: '', message: '' });
+    }, 5000);
   };
 
   const faqs = [

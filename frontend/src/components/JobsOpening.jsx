@@ -1,18 +1,41 @@
-import React, { useState } from 'react';
-import { jobs } from '../assets/initialData.js';
+import React, { useState, useEffect, useContext } from 'react';
 import { FiBriefcase, FiMapPin, FiClock, FiArrowRight, FiChevronUp, FiX, FiUpload, FiLink } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
+import { UserContext } from '../context/UserContext';
 
 const JobsOpening = () => {
   const [showAllJobs, setShowAllJobs] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { getJobs, applyForJob } = useContext(UserContext);
   const [applicationData, setApplicationData] = useState({
     name: '',
     email: '',
     coverLetter: '',
     documentLinks: '',
   });
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setLoading(true);
+        const jobsData = await getJobs();
+        setJobs(jobsData);
+        setError(null);
+      } catch (err) {
+        setError('Failed to fetch jobs. Please try again later.');
+        console.error('Error fetching jobs:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, []);
+
   const displayedJobs = showAllJobs ? jobs : jobs.slice(0, 3);
 
   const handleToggleJobs = () => {
@@ -50,19 +73,52 @@ const JobsOpening = () => {
     }));
   };
 
-  const handleSubmitApplication = (e) => {
+  const handleSubmitApplication = async (e) => {
     e.preventDefault();
-    // Here you would typically send the application data to your backend
-    console.log('Application submitted:', applicationData);
-    // Show success message and close form
-    alert('Application submitted successfully!');
-    handleCloseApplicationForm();
+    if (!selectedJob) return;
+    const success = await applyForJob(selectedJob._id, applicationData);
+    if (success) {
+        alert('Application submitted successfully!');
+        handleCloseApplicationForm();
+    }
+    // Optionally handle error feedback here
   };
 
   // Function to check if text is long enough to need truncation
   const isLongDescription = (text) => {
     return text.length > 100; // Adjusted to show "View More" for shorter text length
   };
+
+  if (loading) {
+    return (
+      <div className="py-16 px-4 md:px-8 lg:px-12 max-w-9xl mx-auto">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-std mx-auto"></div>
+          <p className="mt-4 text-neutral-std">Loading jobs...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-16 px-4 md:px-8 lg:px-12 max-w-9xl mx-auto">
+        <div className="text-center text-red-500">
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (jobs.length === 0) {
+    return (
+      <div className="py-16 px-4 md:px-8 lg:px-12 max-w-9xl mx-auto">
+        <div className="text-center">
+          <p className="text-neutral-std">No job openings available at the moment.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <section className="py-16 px-4 md:px-8 lg:px-12 max-w-9xl mx-auto">
@@ -76,9 +132,9 @@ const JobsOpening = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {displayedJobs.map((job, index) => (
+        {displayedJobs.map((job) => (
           <div 
-            key={index}
+            key={job._id}
             className="bg-white rounded-xl p-6 border border-neutral-light hover:shadow-lg transition-all duration-300 flex flex-col h-full"
           >
             {/* Job Title and Type */}
@@ -93,7 +149,7 @@ const JobsOpening = () => {
                 </div>
               </div>
               <span className="px-3 py-1 bg-primary-light text-primary-std text-sm font-medium rounded-full">
-                Full-Time
+                {job.type}
               </span>
             </div>
 
@@ -150,7 +206,7 @@ const JobsOpening = () => {
             <div className="mt-6">
               <button
                 onClick={() => handleApplyNow(job)}
-                className="inline-flex items-center px-4 py-2 bg-primary-std text-white rounded-lg hover:bg-primary-dark transition-colors duration-300 text-sm font-medium w-full justify-center"
+                className="inline-flex items-center px-4 py-2 bg-primary-std text-white rounded-lg hover:bg-primary-dark transition-colors duration-300 text-sm font-medium  justify-center"
               >
                 Apply Now
                 <FiArrowRight className="ml-2" size={16} />

@@ -46,7 +46,7 @@ const Sidebar = ({ isOpen, toggleSidebar, handleLogout }) => {
             <div className="bg-primary-std text-white p-2 rounded-lg mr-2">
               <FiGrid size={20} />
             </div>
-            Admin Portal
+          Ayonija Admin 
           </h1>
           <button 
             onClick={toggleSidebar}

@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Youtube, ArrowRight, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const Footer = () => {
   const navigate = useNavigate();
+
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState({ type: '', message: '' });
+  const [loading, setLoading] = useState(false);
 
   const scrollToTop = () => {
     window.scrollTo({
@@ -15,6 +19,30 @@ const Footer = () => {
   const handleNavigation = (path) => {
     navigate(path);
     scrollToTop();
+  };
+
+  const handleNewsletterSubmit = async (e) => {
+    e.preventDefault();
+    setStatus({ type: '', message: '' });
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/user/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setStatus({ type: 'success', message: 'Thank you for subscribing!' });
+        setEmail('');
+      } else {
+        setStatus({ type: 'error', message: data.message || 'Subscription failed. Please try again.' });
+      }
+    } catch (error) {
+      setStatus({ type: 'error', message: 'An error occurred. Please try again.' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -103,16 +131,25 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold text-gray-900 mb-2">Subscribe to our newsletter</h3>
             <p className="text-gray-600 text-sm mb-3">Stay updated with our latest research, services, and company news.</p>
-            <div className="flex">
+            <form className="flex" onSubmit={handleNewsletterSubmit}>
               <input
                 type="email"
                 placeholder="Your email address"
                 className="flex-grow border border-gray-300 rounded-l px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                disabled={loading}
               />
-              <button className="bg-green-600 hover:bg-green-700 text-white rounded-r p-2">
-                <ArrowRight size={20} />
+              <button className="bg-green-600 hover:bg-green-700 text-white rounded-r p-2" type="submit" disabled={loading}>
+                {loading ? <span className="px-2">...</span> : <ArrowRight size={20} />}
               </button>
-            </div>
+            </form>
+            {status.message && (
+              <div className={`mt-2 p-2 rounded text-sm ${status.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                {status.message}
+              </div>
+            )}
           </div>
         </div>
 

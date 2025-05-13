@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   FiSearch, 
   FiMail, 
@@ -8,36 +8,26 @@ import {
   FiChevronRight,
   FiTrash2
 } from 'react-icons/fi';
+import { AdminContext } from '../context/AdminContext';
 
 const Subscribers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedSubscriber, setSelectedSubscriber] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [error, setError] = useState(null);
+  const { newsletterSubscribers, getNewsletterSubscribers, loading } = useContext(AdminContext);
 
-  // Dummy data - replace with your actual data
-  const subscribers = [
-    {
-      id: 1,
-      email: 'john.doe@example.com',
-      name: 'John Doe',
-      subscribedDate: '2024-03-15',
-      status: 'Active',
-    },
-    {
-      id: 2,
-      email: 'jane.smith@example.com',
-      name: 'Jane Smith',
-      subscribedDate: '2024-03-10',
-      status: 'Active',
-    },
-    // Add more subscribers...
-  ];
+  useEffect(() => {
+    getNewsletterSubscribers().catch(err => setError('Failed to load subscribers'));
+  }, []);
 
-  const filteredSubscribers = subscribers.filter(subscriber =>
-    subscriber.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (subscriber.name && subscriber.name.toLowerCase().includes(searchTerm.toLowerCase()))
+  // Pagination
+  const pageSize = 10;
+  const filteredSubscribers = newsletterSubscribers.filter(subscriber =>
+    subscriber.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  const paginatedSubscribers = filteredSubscribers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const handleDelete = (subscriber) => {
     setSelectedSubscriber(subscriber);
@@ -46,7 +36,6 @@ const Subscribers = () => {
 
   const confirmDelete = () => {
     // Here you would make an API call to delete the subscriber
-    console.log('Deleting subscriber:', selectedSubscriber);
     setShowDeleteModal(false);
     setSelectedSubscriber(null);
   };
@@ -66,7 +55,7 @@ const Subscribers = () => {
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-std" size={20} />
             <input
               type="text"
-              placeholder="Search by email or name..."
+              placeholder="Search by email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-neutral-light rounded-lg focus:ring-2 focus:ring-primary-std focus:border-transparent"
@@ -91,13 +80,18 @@ const Subscribers = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-neutral-std uppercase tracking-wider">Subscriber</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-neutral-std uppercase tracking-wider">Subscribed Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-neutral-std uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-neutral-std uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-light">
-              {filteredSubscribers.map((subscriber) => (
-                <tr key={subscriber.id} className="hover:bg-neutral-50">
+              {loading ? (
+                <tr><td colSpan={3} className="text-center py-8">Loading...</td></tr>
+              ) : error ? (
+                <tr><td colSpan={3} className="text-center text-alert-error py-8">{error}</td></tr>
+              ) : paginatedSubscribers.length === 0 ? (
+                <tr><td colSpan={3} className="text-center py-8">No subscribers found.</td></tr>
+              ) : paginatedSubscribers.map((subscriber) => (
+                <tr key={subscriber._id} className="hover:bg-neutral-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0">
@@ -106,9 +100,9 @@ const Subscribers = () => {
                         </div>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-neutral-dark">
+                        {/* <div className="text-sm font-medium text-neutral-dark">
                           {subscriber.name || 'Anonymous'}
-                        </div>
+                        </div> */}
                         <div className="text-sm text-neutral-std">{subscriber.email}</div>
                       </div>
                     </div>
@@ -116,15 +110,8 @@ const Subscribers = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center text-sm text-neutral-std">
                       <FiCalendar className="mr-2" size={16} />
-                      {new Date(subscriber.subscribedDate).toLocaleDateString()}
+                      {new Date(subscriber.subscribedAt).toLocaleDateString()}
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      subscriber.status === 'Active' ? 'bg-alert-success/10 text-alert-success' : 'bg-alert-error/10 text-alert-error'
-                    }`}>
-                      {subscriber.status}
-                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
@@ -143,7 +130,7 @@ const Subscribers = () => {
         {/* Pagination */}
         <div className="px-6 py-4 flex items-center justify-between border-t border-neutral-light">
           <div className="text-sm text-neutral-std">
-            Showing <span className="font-medium">1</span> to <span className="font-medium">10</span> of{' '}
+            Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(currentPage * pageSize, filteredSubscribers.length)}</span> of{' '}
             <span className="font-medium">{filteredSubscribers.length}</span> subscribers
           </div>
           <div className="flex items-center space-x-2">
@@ -157,6 +144,7 @@ const Subscribers = () => {
             <button
               className="p-2 rounded-lg hover:bg-neutral-light transition-colors duration-200"
               onClick={() => setCurrentPage(prev => prev + 1)}
+              disabled={currentPage * pageSize >= filteredSubscribers.length}
             >
               <FiChevronRight size={20} />
             </button>
@@ -172,7 +160,7 @@ const Subscribers = () => {
               Delete Subscriber
             </h3>
             <p className="text-neutral-std mb-6">
-              Are you sure you want to remove {selectedSubscriber.name || selectedSubscriber.email} from the newsletter subscribers?
+              Are you sure you want to remove {selectedSubscriber.email} from the newsletter subscribers?
             </p>
             <div className="flex justify-end space-x-4">
               <button

@@ -15,6 +15,7 @@ const AdminContextProvider = (props) => {
     const [totalApplications, setTotalApplications] = useState(0);
     const [postedJobs, setPostedJobs] = useState([]);
     const [admins, setAdmins] = useState([]);
+    const [newsletterSubscribers, setNewsletterSubscribers] = useState([]);
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -508,6 +509,29 @@ const AdminContextProvider = (props) => {
         }
     };
 
+    const getNewsletterSubscribers = async () => {
+        try {
+            setLoading(true);
+            if (!adminToken) {
+                toast.error('Please login first');
+                return [];
+            }
+            const response = await api.get('/api/user/newsletter/subscribers');
+            if (response.data.success) {
+                setNewsletterSubscribers(response.data.data);
+                return response.data.data;
+            } else {
+                toast.error(response.data.message || 'Failed to load subscribers');
+                return [];
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to fetch subscribers');
+            return [];
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const value = {
         adminToken,
         setAdminToken,
@@ -519,6 +543,7 @@ const AdminContextProvider = (props) => {
         totalApplications,
         postedJobs,
         admins,
+        newsletterSubscribers,
         // Product API calls
         getAllProducts,
         getProduct,
@@ -540,6 +565,7 @@ const AdminContextProvider = (props) => {
         getAllAdmins,
         createAdmin,
         deleteAdmin,
+        getNewsletterSubscribers,
     };
 
     return (

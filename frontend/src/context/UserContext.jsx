@@ -21,42 +21,20 @@ const UserContextProvider = (props) => {
         }
     });
 
-    // Add request interceptor to add auth token
-    // api.interceptors.request.use(
-    //     (config) => {
-    //         if (userToken) {
-    //             config.headers.userToken = userToken;
-    //         }
-    //         return config;
-    //     },
-    //     (error) => {
-    //         return Promise.reject(error);
-    //     }
-    // );
-
-    // // Add response interceptor to handle common errors
-    // api.interceptors.response.use(
-    //     (response) => response,
-    //     (error) => {
-    //         if (error.response?.status === 401) {
-    //             setUserToken('');
-    //             localStorage.removeItem('userToken');
-    //             window.location.href = '/login';
-    //         }
-    //         return Promise.reject(error);
-    //     }
-    // );
+    
 
     // Job Application API calls
     const applyForJob = async (jobId, applicationData) => {
         try {
             setLoading(true);
-            if (!userToken) {
-                toast.error('Please login first');
-                return false;
-            }
-
-            const response = await api.post(`/api/jobs/${jobId}/apply`, applicationData);
+            // Ensure documentLinks is an array
+            const dataToSend = {
+                ...applicationData,
+                documentLinks: Array.isArray(applicationData.documentLinks)
+                    ? applicationData.documentLinks
+                    : applicationData.documentLinks.split(',').map(link => link.trim()).filter(Boolean)
+            };
+            const response = await api.post(`/api/user/jobs/${jobId}/apply`, dataToSend);
             
             if (response.data.success) {
                 toast.success('Application submitted successfully');
@@ -149,9 +127,65 @@ const UserContextProvider = (props) => {
             setLoading(false);
         }
     };
+
     const getJobs = async () => {
-        
+        try {
+            setLoading(true);
+            const response = await api.get('/api/user/jobs');
+            
+            if (response.data.success) {
+                return response.data.data;
+            } else {
+                toast.error(response.data.message || 'Failed to load jobs');
+                return [];
+            }
+        } catch (error) {
+            console.error('Error in getJobs:', error);
+            toast.error(error.response?.data?.message || 'Failed to fetch jobs');
+            return [];
+        } finally {
+            setLoading(false);
+        }
     };
+
+    const getProducts = async () => {
+        try {
+            setLoading(true);
+            const response = await api.get('/api/user/products');
+            
+            if (response.data.success) {
+                return response.data.data;
+            } else {
+                toast.error(response.data.message || 'Failed to load products');
+                return [];
+            }
+        } catch (error) {
+            console.error('Error in getProducts:', error);
+            toast.error(error.response?.data?.message || 'Failed to fetch products');
+            return [];
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const sendContactMessage = async (formData) => {
+        try {
+          setLoading(true);
+          const response = await api.post('/api/user/contact', formData);
+          if (response.data.success) {
+            toast.success('Message sent successfully!');
+            return true;
+          } else {
+            toast.error(response.data.message || 'Failed to send message');
+            return false;
+          }
+        } catch (error) {
+          toast.error(error.response?.data?.message || 'Failed to send message');
+          return false;
+        } finally {
+          setLoading(false);
+        }
+      };
 
     const value = {
         userToken,
@@ -163,6 +197,9 @@ const UserContextProvider = (props) => {
         getUserApplications,
         getApplicationStatus,
         withdrawApplication,
+        getJobs,
+        getProducts,
+        sendContactMessage,
     };
 
     return (

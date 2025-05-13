@@ -8,7 +8,7 @@ import jobRoutes from './routes/jobroutes.js';
 import uploadRoutes from './routes/upload.js';
 import { handleMulterError } from './middlewares/upload.js';
 import connectDB from './config/mongodb.js';
-
+import userRoutes from './routes/user.js';
 // Load environment variables first
 dotenv.config();
 
@@ -52,7 +52,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/admin/products', productRoutes);
 app.use('/api/admin/jobs', jobRoutes);
 app.use('/api/admin/upload', uploadRoutes);
-
+app.use('/api/user', userRoutes);
 // Debug route
 app.get('/api/test', (req, res) => {
   res.json({ 

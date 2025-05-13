@@ -241,4 +241,27 @@ export const deleteApplication = async (req, res) => {
             error: error.message
         });
     }
+};
+
+// Apply for a job
+export const applyJob = async (req, res) => {
+    try {
+        const { name, email, coverLetter, documentLinks } = req.body;
+        const jobId = req.params.id;
+        if (!name || !email || !coverLetter) {
+            return res.status(400).json({ success: false, message: 'All fields are required.' });
+        }
+        const application = new Application({
+            jobId,
+            name,
+            email,
+            coverLetter,
+            documentLinks: Array.isArray(documentLinks) ? documentLinks : [],
+        });
+        await application.save();
+        res.status(201).json({ success: true, message: 'Application submitted successfully', data: application });
+    } catch (error) {
+        console.error('Error submitting application:', error);
+        res.status(500).json({ success: false, message: 'Error submitting application', error: error.message });
+    }
 }; 

@@ -53,6 +53,8 @@ const RecentActivity = ({ type, title, time }) => (
           ? "bg-secondary-light text-secondary-std"
           : type === "application"
           ? "bg-alert-success/10 text-alert-success"
+          : type === "subscriber"
+          ? "bg-blue-100 text-blue-600"
           : "bg-alert-warning/10 text-alert-warning"
       }`}
     >
@@ -62,6 +64,8 @@ const RecentActivity = ({ type, title, time }) => (
         <FiBriefcase size={16} />
       ) : type === "application" ? (
         <FiUsers size={16} />
+      ) : type === "subscriber" ? (
+        <FiMail size={16} />
       ) : (
         <FiMail size={16} />
       )}
@@ -84,6 +88,8 @@ const Dashboard = () => {
     getAllProducts, 
     getPostedJobs, 
     getJobApplications,
+    newsletterSubscribers,
+    getNewsletterSubscribers,
     loading 
   } = useContext(AdminContext);
 
@@ -117,7 +123,8 @@ const Dashboard = () => {
       await Promise.all([
         getAllProducts(),
         getPostedJobs(),
-        getJobApplications()
+        getJobApplications(),
+        getNewsletterSubscribers()
       ]);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -126,11 +133,11 @@ const Dashboard = () => {
     } finally {
       setIsInitialLoad(false);
     }
-  }, [isInitialLoad, getAllProducts, getPostedJobs, getJobApplications]);
+  }, [isInitialLoad, getAllProducts, getPostedJobs, getJobApplications, getNewsletterSubscribers]);
 
   useEffect(() => {
     fetchDashboardData();
-  }, [fetchDashboardData]);
+  }, []);
 
   // Memoize stats calculation
   const stats = useMemo(() => [
@@ -155,10 +162,10 @@ const Dashboard = () => {
     {
       icon: <FiMail size={24} />,
       label: "Subscribers",
-      value: "2,845",
+      value: newsletterSubscribers.length.toString(),
       trend: "+8.1%"
     }
-  ], [products.length, postedJobs.length, jobApplications.length]);
+  ], [products.length, postedJobs.length, jobApplications.length, newsletterSubscribers.length]);
 
   // Memoize recent activities calculation
   const recentActivities = useMemo(() => {
@@ -194,9 +201,19 @@ const Dashboard = () => {
       });
     });
 
+    // Add recent newsletter subscribers
+    const recentSubscribers = newsletterSubscribers.slice(0, 2);
+    recentSubscribers.forEach(subscriber => {
+      activities.push({
+        type: "subscriber",
+        title: `New newsletter subscriber: ${subscriber.email}`,
+        time: formatTimeAgo(subscriber.subscribedAt)
+      });
+    });
+
     // Sort activities by time
     return activities.sort((a, b) => new Date(b.time) - new Date(a.time));
-  }, [products, postedJobs, jobApplications]);
+  }, [products, postedJobs, jobApplications, newsletterSubscribers]);
 
   if (loading && isInitialLoad) {
     return (
