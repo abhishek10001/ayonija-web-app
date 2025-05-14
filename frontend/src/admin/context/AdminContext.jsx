@@ -16,6 +16,7 @@ const AdminContextProvider = (props) => {
     const [postedJobs, setPostedJobs] = useState([]);
     const [admins, setAdmins] = useState([]);
     const [newsletterSubscribers, setNewsletterSubscribers] = useState([]);
+    const [messages, setMessages] = useState([]);       
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -532,6 +533,43 @@ const AdminContextProvider = (props) => {
         }
     };
 
+    const getMessages = async () => {
+        try {
+            if (!adminToken) {
+                toast.error('Please login first');
+                return [];
+            }
+
+            console.log('Fetching messages with token:', adminToken); // Debug log
+            const response = await api.get('/api/admin/messages', {
+                headers: {
+                    adminToken: adminToken
+                }
+            });
+            
+            console.log('Messages response:', response.data); // Debug log
+            
+            if (response.data.success) {
+                const messagesData = response.data.data;
+                console.log('Setting messages:', messagesData); // Debug log
+                setMessages(messagesData);
+                return messagesData;
+            } else {
+                toast.error(response.data.message || 'Failed to load messages');
+                return [];
+            }
+        } catch (error) {
+            console.error('Error in getMessages:', error);
+            console.error('Error details:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status
+            });
+            toast.error(error.response?.data?.message || 'Failed to fetch messages');
+            return [];
+        }
+    };
+
     const value = {
         adminToken,
         setAdminToken,
@@ -544,15 +582,14 @@ const AdminContextProvider = (props) => {
         postedJobs,
         admins,
         newsletterSubscribers,
-        // Product API calls
+        messages,
+        api,
         getAllProducts,
         getProduct,
         createProduct,
         updateProduct,
         deleteProduct,
-        // File upload
         uploadImage,
-        // Job API calls
         getJobApplications,
         getApplicationById,
         updateApplicationStatus,
@@ -561,11 +598,11 @@ const AdminContextProvider = (props) => {
         createJob,
         updateJob,
         deleteJob,
-        // Admin management functions
         getAllAdmins,
         createAdmin,
         deleteAdmin,
         getNewsletterSubscribers,
+        getMessages,
     };
 
     return (

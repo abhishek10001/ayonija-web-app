@@ -109,6 +109,7 @@
 
 import jwt from 'jsonwebtoken';
 import Admin from '../models/Admin.js';
+import { ContactMessage } from '../models/ContactMessage.js';
 
 // Handle admin sign-in
 export const handleAdminSignIn = async (req, res) => {
@@ -331,3 +332,23 @@ export const deleteAdmin = async (req, res) => {
     });
   }
 };
+
+export const getMessages = async (req, res) => {
+  try {
+    const messages = await ContactMessage.find();
+    res.status(200).json({
+      success: true,
+      data: messages
+    });
+  } catch (error) {
+    console.error('Error getting messages:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching messages',
+      error: error.message
+    });
+  }
+};
+
+
+

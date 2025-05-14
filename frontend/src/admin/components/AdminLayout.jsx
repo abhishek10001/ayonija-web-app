@@ -15,7 +15,8 @@ import {
   FiBell,
   FiUser,
   FiTrash2,
-  FiPlus
+  FiPlus,
+  FiMessageSquare
 } from 'react-icons/fi';
 import { AdminContext } from '../context/AdminContext';
 import axios from 'axios';
@@ -32,6 +33,7 @@ const Sidebar = ({ isOpen, toggleSidebar, handleLogout }) => {
     { path: '/admin/jobs', icon: <FiBriefcase size={20} />, label: 'Job Postings' },
     { path: '/admin/jobs/add', icon: <FiPlusCircle size={20} />, label: 'Add Job' },
     { path: '/admin/applications', icon: <FiUsers size={20} />, label: 'Job Applications' },
+    { path: '/admin/messages', icon: <FiMessageSquare size={20} />, label: 'Contact Messages' },
     { path: '/admin/subscribers', icon: <FiMail size={20} />, label: 'Newsletter Subscribers' },
   ];
 
@@ -56,7 +58,7 @@ const Sidebar = ({ isOpen, toggleSidebar, handleLogout }) => {
           </button>
         </div>
 
-        <div className="px-4 py-4">
+        {/* <div className="px-4 py-4">
           <div className="relative">
             <input 
               type="text" 
@@ -65,11 +67,11 @@ const Sidebar = ({ isOpen, toggleSidebar, handleLogout }) => {
             />
             <FiSearch className="absolute left-3 top-2.5 text-neutral-std" size={18} />
           </div>
-        </div>
+        </div> */}
 
-        <nav className="flex-1 overflow-y-auto py-2 px-3">
+        <nav className="flex-1 overflow-y-auto py-2 px-3 mt-3">
           <div className="px-3">
-            <h3 className="text-xs font-semibold text-neutral-std uppercase tracking-wider">Main</h3>
+            <h3 className="text-xs py-2 font-semibold text-neutral-std uppercase tracking-wider">Main</h3>
           </div>
           {menuItems.slice(0, 1).map((item) => (
             <Link
@@ -177,7 +179,7 @@ const AdminLayout = () => {
   });
   const location = useLocation();
   const navigate = useNavigate();
-  const { adminToken, setAdminToken, admins, getAllAdmins, createAdmin, deleteAdmin } = useContext(AdminContext);
+  const { adminToken, setAdminToken, admins, getAllAdmins, createAdmin, deleteAdmin, messages } = useContext(AdminContext);
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {

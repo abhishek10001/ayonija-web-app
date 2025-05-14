@@ -35,6 +35,7 @@ import Jobs from './admin/pages/Jobs'
 import AddJob from './admin/pages/AddJob'
 import Applications from './admin/pages/Applications'
 import Subscribers from './admin/pages/Subscribers'
+import Messages from './admin/pages/Messages'
 
 const App = () => {
   return (
@@ -80,6 +81,7 @@ const App = () => {
                 <Route path="jobs/add" element={<AddJob />} />
                 <Route path="applications" element={<Applications />} />
                 <Route path="subscribers" element={<Subscribers />} />
+                <Route path="messages" element={<Messages />} />
                 <Route index element={<Navigate to="dashboard" replace />} />
               </Route>
             </Routes>
